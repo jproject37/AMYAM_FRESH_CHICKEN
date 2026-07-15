@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AMYAM FRESH CHICKEN</title>
+<style>
+  :root {
+    --brand: #E56458;
+    --brand-dark: #c94b40;
+    --amber: #D5803B;
+    --ink: #2C2C2B;
+    --muted: #7D7A75;
+    --canvas: #FFFFFF;
+    --soft: #F9F8F7;
+    --border: #E6E5E3;
+    --green: #46A171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 500px at 50% -200px, #FCE9E7 0%, rgba(252,233,231,0) 70%),
+      var(--soft);
+    min-height: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 16px 48px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { width: 100%; max-width: 440px; }
+
+  .brand { text-align: center; margin-bottom: 20px; }
+  .logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 64px; height: 64px; border-radius: 18px;
+    background: linear-gradient(160deg, var(--brand) 0%, var(--amber) 100%);
+    box-shadow: 0 8px 20px rgba(229,100,88,.28);
+    font-size: 32px; margin-bottom: 12px;
+  }
+  .brand h1 { font-size: 26px; letter-spacing: .04em; font-weight: 800; line-height: 1.1; }
+  .brand h1 .accent { color: var(--brand); }
+  .brand p { color: var(--muted); font-size: 13px; margin-top: 6px; letter-spacing: .12em; text-transform: uppercase; }
+
+  .card {
+    background: var(--canvas); border: 1px solid var(--border); border-radius: 16px;
+    padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.04);
+  }
+  .field { margin-bottom: 18px; }
+  .field:last-of-type { margin-bottom: 8px; }
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  label .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 6px; background: #FCE9E7;
+    color: var(--brand-dark); font-size: 12px; font-weight: 700; margin-right: 8px;
+  }
+  input, textarea {
+    width: 100%; font-family: inherit; font-size: 16px; color: var(--ink);
+    background: var(--soft); border: 1px solid var(--border); border-radius: 10px;
+    padding: 13px 14px; transition: border-color .15s, box-shadow .15s, background .15s;
+  }
+  input::placeholder, textarea::placeholder { color: #b3afa9; }
+  textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+  input:focus, textarea:focus {
+    outline: none; background: #fff; border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(229,100,88,.15);
+  }
+
+  .btn {
+    width: 100%; border: none; border-radius: 12px; padding: 15px 20px;
+    font-family: inherit; font-size: 16px; font-weight: 700; letter-spacing: .02em;
+    color: #fff; background: linear-gradient(160deg, var(--brand) 0%, var(--brand-dark) 100%);
+    cursor: pointer; margin-top: 8px; box-shadow: 0 6px 16px rgba(229,100,88,.30);
+    transition: transform .08s ease, box-shadow .15s, opacity .15s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px;
+  }
+  .btn:hover { box-shadow: 0 8px 22px rgba(229,100,88,.38); }
+  .btn:active { transform: translateY(1px); }
+
+  .hint { text-align: center; color: var(--muted); font-size: 12px; margin-top: 14px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px;
+    font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .summary {
+    margin-top: 16px; border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; background: #E8F1EC; border-color: #cbe4d5; display: none;
+  }
+  .summary.show { display: block; }
+  .summary h3 { font-size: 14px; color: var(--green); display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+  .summary .row { font-size: 14px; margin-bottom: 6px; }
+  .summary .row span { color: var(--muted); display: block; font-size: 12px; margin-bottom: 2px; }
+  .summary .row b { font-weight: 600; white-space: pre-wrap; }
+
+  .err { border-color: var(--brand) !important; box-shadow: 0 0 0 3px rgba(229,100,88,.15) !important; }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="brand">
+      <div class="logo">🐔</div>
+      <h1>AMYAM <span class="accent">FRESH CHICKEN</span></h1>
+      <p>Ayam Segar Setiap Hari</p>
+    </div>
+
+    <div class="card">
+      <form id="orderForm" novalidate>
+        <div class="field">
+          <label for="nama"><span class="num">1</span>Nama Pelanggan / Warung / Toko</label>
+          <input id="nama" name="nama" type="text" placeholder="Contoh: Warung Bu Sri" autocomplete="off" />
+        </div>
+
+        <div class="field">
+          <label for="pesanan"><span class="num">2</span>Pesanan di sini</label>
+          <textarea id="pesanan" name="pesanan" placeholder="Tulis pesanan Anda di sini... Contoh: Ayam potong 5 kg, dada fillet 2 kg, sayap 1 kg"></textarea>
+        </div>
+
+        <button type="submit" class="btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          Kirim Pesanan
+        </button>
+      </form>
+
+      <div class="summary" id="summary">
+        <h3>✅ Pesanan Terkirim</h3>
+        <div class="row"><span>Nama</span><b id="sNama"></b></div>
+        <div class="row"><span>Pesanan</span><b id="sPesanan"></b></div>
+      </div>
+
+      <p class="hint">Pastikan pesanan sudah benar sebelum mengirim.</p>
+    </div>
+    <p class="hint"><a href="admin.html" style="color:var(--muted);text-decoration:none;">Masuk Admin →</a></p>
+  </div>
+
+  <div class="toast" id="toast">✅ Pesanan berhasil dikirim!</div>
+
+<script>
+const firebaseConfig = null;
+
+window.AmyamStore = (function () {
+  const KEY = "amyam_orders";
+  const listeners = new Set();
+  let orders = [];
+  let mode = "local";
+  let cloud = null;
+  let bc = null;
+
+  function uid() { return "o_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function emit() { const snap = orders.slice(); listeners.forEach((cb) => cb(snap)); }
+  function sortOrders() { orders.sort((a, b) => new Date(b.waktu) - new Date(a.waktu)); }
+
+  function loadLocal() {
+    try { orders = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { orders = []; }
+    sortOrders();
+  }
+  function persistLocal() {
+    localStorage.setItem(KEY, JSON.stringify(orders));
+    if (bc) bc.postMessage("changed");
+  }
+  function initLocal() {
+    loadLocal();
+    try {
+      bc = new BroadcastChannel("amyam_orders");
+      bc.onmessage = () => { loadLocal(); emit(); };
+    } catch (e) {}
+    window.addEventListener("storage", (e) => { if (e.key === KEY) { loadLocal(); emit(); } });
+  }
+
+  async function initCloud(cfg) {
+    const appMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+    const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const app = appMod.initializeApp(cfg);
+    const db = fsMod.getFirestore(app);
+    cloud = { db, fs: fsMod };
+    mode = "cloud";
+    const q = fsMod.query(fsMod.collection(db, "orders"), fsMod.orderBy("waktu", "desc"));
+    fsMod.onSnapshot(q, (snap) => {
+      orders = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+      emit();
+    });
+  }
+
+  async function addOrder(data) {
+    const order = { nama: String(data.nama || "").trim(), pesanan: String(data.pesanan || "").trim(), status: "Baru", waktu: new Date().toISOString() };
+    if (mode === "cloud") {
+      await cloud.fs.addDoc(cloud.fs.collection(cloud.db, "orders"), order);
+    } else {
+      order.id = uid(); orders.unshift(order); persistLocal(); emit();
+    }
+    return order;
+  }
+  async function updateStatus(id, status) {
+    if (mode === "cloud") { await cloud.fs.updateDoc(cloud.fs.doc(cloud.db, "orders", id), { status }); }
+    else { const o = orders.find((x) => x.id === id); if (o) { o.status = status; persistLocal(); emit(); } }
+  }
+  async function remove(id) {
+    if (mode === "cloud") { await cloud.fs.deleteDoc(cloud.fs.doc(cloud.db, "orders", id)); }
+    else { orders = orders.filter((x) => x.id !== id); persistLocal(); emit(); }
+  }
+  async function clearAll() {
+    if (mode === "cloud") {
+      const snap = await cloud.fs.getDocs(cloud.fs.collection(cloud.db, "orders"));
+      await Promise.all(snap.docs.map((d) => cloud.fs.deleteDoc(d.ref)));
+    } else { orders = []; persistLocal(); emit(); }
+  }
+  function subscribe(cb) { listeners.add(cb); cb(orders.slice()); return () => listeners.delete(cb); }
+  function getMode() { return mode; }
+
+  const ready = (async () => {
+    if (firebaseConfig) {
+      try { await initCloud(firebaseConfig); }
+      catch (e) { console.error("Mode cloud gagal, beralih ke mode lokal:", e); initLocal(); emit(); }
+    } else { initLocal(); emit(); }
+  })();
+
+  return { subscribe, addOrder, updateStatus, remove, clearAll, getMode, ready };
+})();
+</script>
+<script>
+  const form = document.getElementById('orderForm');
+  const nama = document.getElementById('nama');
+  const pesanan = document.getElementById('pesanan');
+  const toast = document.getElementById('toast');
+  const summary = document.getElementById('summary');
+
+  function flash(el) {
+    el.classList.add('err');
+    el.focus();
+    setTimeout(() => el.classList.remove('err'), 1500);
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    if (!nama.value.trim()) { flash(nama); return; }
+    if (!pesanan.value.trim()) { flash(pesanan); return; }
+
+    const namaVal = nama.value.trim();
+    const pesananVal = pesanan.value.trim();
+
+    document.getElementById('sNama').textContent = namaVal;
+    document.getElementById('sPesanan').textContent = pesananVal;
+    summary.classList.add('show');
+
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2600);
+
+    try {
+      await AmyamStore.ready;
+      await AmyamStore.addOrder({ nama: namaVal, pesanan: pesananVal });
+    } catch (err) { console.error(err); }
+
+    form.reset();
+    summary.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+</script>
+</body>
+</html>

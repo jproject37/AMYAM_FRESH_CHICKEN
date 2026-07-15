@@ -28,6 +28,7 @@
     padding-bottom: 48px;
   }
 
+  /* Top bar */
   header {
     background: var(--canvas);
     border-bottom: 1px solid var(--border);
@@ -35,6 +36,529 @@
   }
   .bar {
     max-width: 1080px; margin: 0 auto;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 24px;
+  }
+  .logo {
+    width: 40px; height: 40px; border-radius: 11px;
+    background: linear-gradient(160deg, var(--brand) 0%, var(--amber) 100%);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 20px; flex: none;
+  }
+  .title h1 { font-size: 16px; font-weight: 800; letter-spacing: .03em; line-height: 1.1; }
+  .title p { font-size: 12px; color: var(--muted); }
+  .spacer { flex: 1; }
+  .mode-badge {
+    font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px;
+    background: var(--surface2); color: var(--muted);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .dot.live { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .ghost-btn {
+    border: 1px solid var(--border); background: var(--canvas); color: var(--ink);
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    padding: 8px 12px; border-radius: 9px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; min-height: 36px;
+  }
+  .ghost-btn:hover { background: var(--soft); }
+  .ghost-btn.danger { color: var(--brand-dark); border-color: #f0cfcb; }
+  .ghost-btn.danger:hover { background: #FCE9E7; }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 24px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+  .stat {
+    background: var(--canvas); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .stat .n { font-size: 28px; font-weight: 800; line-height: 1; }
+  .stat .l { font-size: 12px; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+  .stat.baru .n { color: var(--orange); }
+  .stat.proses .n { color: var(--blue); }
+  .stat.selesai .n { color: var(--green); }
+
+  /* Filter tabs */
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .tab {
+    border: 1px solid var(--border); background: var(--canvas); color: var(--muted);
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    padding: 8px 14px; border-radius: 999px; cursor: pointer; min-height: 36px;
+  }
+  .tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* Order cards */
+  .orders { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+  .order {
+    background: var(--canvas); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  .order .head { display: flex; align-items: flex-start; gap: 10px; }
+  .order .who { flex: 1; min-width: 0; }
+  .order .who h3 { font-size: 15px; font-weight: 700; word-break: break-word; }
+  .order .who time { font-size: 12px; color: var(--muted); }
+  .order .who .hp { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badge { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px; white-space: nowrap; flex: none; }
+  .badge.Baru { background: var(--orange-soft); color: var(--orange); }
+  .badge.Diproses { background: var(--blue-soft); color: var(--blue); }
+  .badge.Selesai { background: var(--green-soft); color: var(--green); }
+  .order .body {
+    background: var(--soft); border: 1px solid var(--border); border-radius: 10px;
+    padding: 11px 12px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+    color: var(--ink); max-height: 180px; overflow: auto;
+  }
+  .order .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .act {
+    flex: 1; border: none; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 700;
+    padding: 10px; cursor: pointer; min-height: 40px; min-width: 90px;
+  }
+  .act.proses { background: var(--blue); color: #fff; }
+  .act.selesai { background: var(--green); color: #fff; }
+  .act.undo { background: var(--surface2); color: var(--ink); flex: none; min-width: 44px; }
+  .act.del { background: transparent; color: var(--brand-dark); border: 1px solid #f0cfcb; flex: none; min-width: 44px; }
+  .act:hover { filter: brightness(.96); }
+
+  .empty {
+    text-align: center; padding: 64px 20px; color: var(--muted);
+    border: 1px dashed var(--border); border-radius: 16px; background: var(--canvas);
+  }
+  .empty .ico { font-size: 40px; margin-bottom: 12px; }
+  .empty h3 { font-size: 16px; color: var(--ink); margin-bottom: 6px; }
+
+  .omset { margin-top: 28px; text-align: center; }
+  .omset-btn {
+    border: none; border-radius: 12px; padding: 14px 22px; font-family: inherit;
+    font-size: 15px; font-weight: 700; color: #fff; cursor: pointer;
+    background: linear-gradient(160deg, var(--green) 0%, #35835b 100%);
+    box-shadow: 0 6px 16px rgba(70,161,113,.28); min-height: 48px;
+  }
+  .omset-panel {
+    display: none; margin: 16px auto 0; max-width: 420px; text-align: left;
+    background: var(--canvas); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+  }
+  .omset-panel.show { display: block; }
+  .omset-panel .line { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .omset-panel .line:last-child { border-bottom: none; }
+  .omset-panel .note { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .bar { padding: 12px 16px; }
+    main { padding: 16px; }
+  }
+
+  /* Kunci PIN admin */
+  body.locked { overflow: hidden; }
+  .lock {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--soft);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .lock.hide { display: none; }
+  .lock-card {
+    background: var(--canvas); border: 1px solid var(--border); border-radius: 16px;
+    padding: 30px 24px; width: 100%; max-width: 340px; text-align: center;
+    box-shadow: 0 8px 28px rgba(0,0,0,.07);
+  }
+  .lock .logo { margin: 0 auto 14px; width: 52px; height: 52px; font-size: 26px; }
+  .lock h2 { font-size: 19px; font-weight: 800; margin-bottom: 4px; }
+  .lock p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .lock .err-msg { color: var(--brand-dark); font-size: 13px; min-height: 18px; margin-bottom: 6px; }
+  .lock input {
+    width: 100%; text-align: center; letter-spacing: .4em; font-size: 22px;
+    font-family: inherit; padding: 13px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--soft); margin-bottom: 12px;
+  }
+  .lock input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(229,100,88,.15); background: #fff; }
+  .lock button {
+    width: 100%; border: none; border-radius: 12px; padding: 14px;
+    font-family: inherit; font-size: 15px; font-weight: 700; color: #fff;
+    background: linear-gradient(160deg, var(--brand) 0%, var(--brand-dark) 100%);
+    cursor: pointer; min-height: 48px;
+  }
+</style>
+</head>
+<body class="locked">
+  <div class="lock" id="lock">
+    <div class="lock-card">
+      <div class="logo">🔒</div>
+      <h2>Panel Admin</h2>
+      <p>Masukkan PIN untuk masuk</p>
+      <div class="err-msg" id="lockErr"></div>
+      <input id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off" />
+      <button id="pinBtn">Masuk</button>
+    </div>
+  </div>
+
+  <header>
+    <div class="bar">
+      <div class="logo">🐔</div>
+      <div class="title">
+        <h1>AMYAM FRESH CHICKEN</h1>
+        <p>Panel Admin · Pesanan Masuk</p>
+      </div>
+      <div class="spacer"></div>
+      <span class="mode-badge" id="modeBadge"><span class="dot live"></span> Real-time</span>
+      <button class="ghost-btn danger" id="clearBtn" title="Kosongkan semua pesanan">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+        Bersihkan
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stats">
+      <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Total</div></div>
+      <div class="stat baru"><div class="n" id="stBaru">0</div><div class="l">Baru</div></div>
+      <div class="stat proses"><div class="n" id="stProses">0</div><div class="l">Diproses</div></div>
+      <div class="stat selesai"><div class="n" id="stSelesai">0</div><div class="l">Selesai</div></div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-f="all">Semua</button>
+      <button class="tab" data-f="Baru">Baru</button>
+      <button class="tab" data-f="Diproses">Diproses</button>
+      <button class="tab" data-f="Selesai">Selesai</button>
+    </div>
+
+    <div class="orders" id="orders"></div>
+
+    <div class="omset">
+      <button class="omset-btn" id="omsetBtn">💰 Kalkulasi Omset</button>
+      <div class="omset-panel" id="omsetPanel"></div>
+    </div>
+  </main>
+
+<script>
+/*
+  AMYAM FRESH CHICKEN - Lapisan data pesanan (dipakai bersama oleh index.html & admin.html)
+
+  MODE:
+  - LOKAL (default): pesanan disimpan di localStorage & tersinkron real-time antar-tab
+    di perangkat/browser yang SAMA. Cocok untuk uji coba di satu perangkat.
+  - CLOUD (lintas perangkat, real-time): isi firebaseConfig di bawah dengan konfigurasi
+    proyek Firebase Anda. Pelanggan mengirim dari HP mereka, admin melihat masuk seketika.
+
+  Cara mengaktifkan CLOUD:
+  1. Buat proyek gratis di https://console.firebase.google.com
+  2. Tambahkan Web App, salin objek konfigurasinya.
+  3. Aktifkan Firestore Database (mode production/test).
+  4. Tempel konfigurasi ke firebaseConfig di bawah ini.
+*/
+
+const firebaseConfig = null; // <- ganti dengan objek konfigurasi Firebase untuk mode cloud
+
+window.AmyamStore = (function () {
+  const KEY = "amyam_orders";
+  const listeners = new Set();
+  let orders = [];
+  let mode = "local";
+  let cloud = null;
+  let bc = null;
+
+  function uid() {
+    return "o_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+  function emit() {
+    const snap = orders.slice();
+    listeners.forEach((cb) => cb(snap));
+  }
+  function sortOrders() {
+    orders.sort((a, b) => new Date(b.waktu) - new Date(a.waktu));
+  }
+
+  /* ---------------- MODE LOKAL ---------------- */
+  function loadLocal() {
+    try {
+      orders = JSON.parse(localStorage.getItem(KEY) || "[]");
+    } catch (e) {
+      orders = [];
+    }
+    sortOrders();
+  }
+  function persistLocal() {
+    localStorage.setItem(KEY, JSON.stringify(orders));
+    if (bc) bc.postMessage("changed");
+  }
+  function initLocal() {
+    loadLocal();
+    if (orders.length === 0 && window.__AMYAM_DEMO === true) {
+      const now = Date.now();
+      orders = [
+        { id: uid(), nama: "Warung Bu Sri", pesanan: "Ayam potong 5 kg\nDada fillet 2 kg", status: "Baru", waktu: new Date(now - 2 * 60000).toISOString() },
+        { id: uid(), nama: "RM Padang Sederhana", pesanan: "Ayam kampung 10 ekor\nHati ampela 1 kg", status: "Diproses", waktu: new Date(now - 18 * 60000).toISOString() },
+        { id: uid(), nama: "Toko Frozen Berkah", pesanan: "Sayap 8 kg\nPaha bawah 6 kg\nCeker 3 kg", status: "Selesai", waktu: new Date(now - 65 * 60000).toISOString() },
+        { id: uid(), nama: "Katering Melati", pesanan: "Dada fillet 4 kg", status: "Baru", waktu: new Date(now - 1 * 60000).toISOString() },
+      ];
+      sortOrders();
+    }
+    try {
+      bc = new BroadcastChannel("amyam_orders");
+      bc.onmessage = () => {
+        loadLocal();
+        emit();
+      };
+    } catch (e) {}
+    window.addEventListener("storage", (e) => {
+      if (e.key === KEY) {
+        loadLocal();
+        emit();
+      }
+    });
+  }
+
+  /* ---------------- MODE CLOUD (Firebase Firestore) ---------------- */
+  async function initCloud(cfg) {
+    const appMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+    const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const app = appMod.initializeApp(cfg);
+    const db = fsMod.getFirestore(app);
+    cloud = { db, fs: fsMod };
+    mode = "cloud";
+    const q = fsMod.query(fsMod.collection(db, "orders"), fsMod.orderBy("waktu", "desc"));
+    fsMod.onSnapshot(q, (snap) => {
+      orders = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+      emit();
+    });
+  }
+
+  /* ---------------- API PUBLIK ---------------- */
+  async function addOrder(data) {
+    const order = {
+      nama: String(data.nama || "").trim(),
+      hp: String(data.hp || "").trim(),
+      pesanan: String(data.pesanan || "").trim(),
+      status: "Baru",
+      waktu: new Date().toISOString(),
+    };
+    if (mode === "cloud") {
+      await cloud.fs.addDoc(cloud.fs.collection(cloud.db, "orders"), order);
+    } else {
+      order.id = uid();
+      orders.unshift(order);
+      persistLocal();
+      emit();
+    }
+    return order;
+  }
+
+  async function updateStatus(id, status) {
+    if (mode === "cloud") {
+      await cloud.fs.updateDoc(cloud.fs.doc(cloud.db, "orders", id), { status });
+    } else {
+      const o = orders.find((x) => x.id === id);
+      if (o) {
+        o.status = status;
+        persistLocal();
+        emit();
+      }
+    }
+  }
+
+  async function remove(id) {
+    if (mode === "cloud") {
+      await cloud.fs.deleteDoc(cloud.fs.doc(cloud.db, "orders", id));
+    } else {
+      orders = orders.filter((x) => x.id !== id);
+      persistLocal();
+      emit();
+    }
+  }
+
+  async function clearAll() {
+    if (mode === "cloud") {
+      const snap = await cloud.fs.getDocs(cloud.fs.collection(cloud.db, "orders"));
+      await Promise.all(snap.docs.map((d) => cloud.fs.deleteDoc(d.ref)));
+    } else {
+      orders = [];
+      persistLocal();
+      emit();
+    }
+  }
+
+  function subscribe(cb) {
+    listeners.add(cb);
+    cb(orders.slice());
+    return () => listeners.delete(cb);
+  }
+
+  function getMode() {
+    return mode;
+  }
+
+  const ready = (async () => {
+    if (firebaseConfig) {
+      try {
+        await initCloud(firebaseConfig);
+      } catch (e) {
+        console.error("Mode cloud gagal, beralih ke mode lokal:", e);
+        initLocal();
+        emit();
+      }
+    } else {
+      initLocal();
+      emit();
+    }
+  })();
+
+  return { subscribe, addOrder, updateStatus, remove, clearAll, getMode, ready };
+})();
+
+</script>
+<script>
+  /* ====== PIN ADMIN ======
+     Ganti angka di bawah ini dengan PIN pilihan Anda. */
+  const ADMIN_PIN = "080888";
+
+  (function initLock() {
+    const lock = document.getElementById("lock");
+    const input = document.getElementById("pinInput");
+    const btn = document.getElementById("pinBtn");
+    const err = document.getElementById("lockErr");
+    if (sessionStorage.getItem("amyam_admin_ok") === "1") {
+      lock.classList.add("hide");
+      document.body.classList.remove("locked");
+      return;
+    }
+    function tryUnlock() {
+      if (input.value === ADMIN_PIN) {
+        sessionStorage.setItem("amyam_admin_ok", "1");
+        lock.classList.add("hide");
+        document.body.classList.remove("locked");
+      } else {
+        err.textContent = "PIN salah, coba lagi.";
+        input.value = "";
+        input.focus();
+      }
+    }
+    btn.addEventListener("click", tryUnlock);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") tryUnlock(); });
+    setTimeout(() => input.focus(), 100);
+  })();
+
+  const $ = (id) => document.getElementById(id);
+  let allOrders = [];
+  let filter = "all";
+
+  function fmtTime(iso) {
+    const d = new Date(iso);
+    const now = new Date();
+    const diff = Math.floor((now - d) / 60000);
+    if (diff < 1) return "Baru saja";
+    if (diff < 60) return diff + " menit lalu";
+    return d.toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  function fmtFull(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+  function esc(s) { return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+  function render() {
+    const total = allOrders.length;
+    const baru = allOrders.filter((o) => o.status === "Baru").length;
+    const proses = allOrders.filter((o) => o.status === "Diproses").length;
+    const selesai = allOrders.filter((o) => o.status === "Selesai").length;
+    $("stTotal").textContent = total;
+    $("stBaru").textContent = baru;
+    $("stProses").textContent = proses;
+    $("stSelesai").textContent = selesai;
+
+    const list = filter === "all" ? allOrders : allOrders.filter((o) => o.status === filter);
+    const wrap = $("orders");
+
+    if (list.length === 0) {
+      wrap.innerHTML =
+        '<div class="empty" style="grid-column:1/-1"><div class="ico">📭</div><h3>Belum ada pesanan</h3><p>Pesanan dari pelanggan akan muncul di sini secara otomatis.</p></div>';
+      return;
+    }
+
+    wrap.innerHTML = list
+      .map((o) => {
+        let actions = "";
+        if (o.status === "Baru")
+          actions = `<button class="act proses" data-a="proses" data-id="${o.id}">Proses</button>`;
+        else if (o.status === "Diproses")
+          actions =
+            `<button class="act undo" data-a="baru" data-id="${o.id}" title="Kembalikan ke Baru">↩</button>` +
+            `<button class="act selesai" data-a="selesai" data-id="${o.id}">Selesai</button>`;
+        else
+          actions = `<button class="act undo" data-a="proses" data-id="${o.id}" title="Kembali ke Diproses">↩ Buka lagi</button>`;
+
+        return `<div class="order">
+          <div class="head">
+            <div class="who"><h3>${esc(o.nama)}</h3><time>${fmtFull(o.waktu)} · ${fmtTime(o.waktu)}</time>${o.hp ? `<div class="hp">📞 ${esc(o.hp)}</div>` : ""}</div>
+            <span class="badge ${o.status}">${o.status}</span>
+          </div>
+          <div class="body">${esc(o.pesanan)}</div>
+          <div class="actions">
+            ${actions}
+            <button class="act del" data-a="del" data-id="${o.id}" title="Hapus">🗑</button>
+          </div>
+        </div>`;
+      })
+      .join("");
+  }
+
+  // Event delegation untuk aksi kartu
+  $("orders").addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-a]");
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const a = btn.dataset.a;
+    if (a === "proses") await AmyamStore.updateStatus(id, "Diproses");
+    else if (a === "selesai") await AmyamStore.updateStatus(id, "Selesai");
+    else if (a === "baru") await AmyamStore.updateStatus(id, "Baru");
+    else if (a === "del") { if (confirm("Hapus pesanan ini?")) await AmyamStore.remove(id); }
+  });
+
+  // Tabs
+  $("tabs").addEventListener("click", (e) => {
+    const t = e.target.closest(".tab");
+    if (!t) return;
+    filter = t.dataset.f;
+    document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === t));
+    render();
+  });
+
+  $("clearBtn").addEventListener("click", async () => {
+    if (confirm("Kosongkan SEMUA pesanan? Tindakan ini tidak bisa dibatalkan.")) await AmyamStore.clearAll();
+  });
+
+  $("omsetBtn").addEventListener("click", () => {
+    const panel = $("omsetPanel");
+    if (panel.classList.contains("show")) { panel.classList.remove("show"); return; }
+    const total = allOrders.length;
+    const selesai = allOrders.filter((o) => o.status === "Selesai").length;
+    const proses = allOrders.filter((o) => o.status === "Diproses").length;
+    const baru = allOrders.filter((o) => o.status === "Baru").length;
+    panel.innerHTML =
+      `<div class="line"><span>Total pesanan</span><b>${total}</b></div>` +
+      `<div class="line"><span>Selesai</span><b>${selesai}</b></div>` +
+      `<div class="line"><span>Diproses</span><b>${proses}</b></div>` +
+      `<div class="line"><span>Baru</span><b>${baru}</b></div>` +
+      `<div class="note">Perhitungan omset dalam Rupiah akan ditambahkan setelah alur harga/produk Anda tetapkan. Untuk sekarang panel ini menampilkan rekap jumlah pesanan.</div>`;
+    panel.classList.add("show");
+  });
+
+  // Langganan data real-time
+  AmyamStore.ready.then(() => {
+    const mode = AmyamStore.getMode();
+    $("modeBadge").innerHTML =
+      mode === "cloud"
+        ? '<span class="dot live"></span> Cloud · real-time'
+        : '<span class="dot live"></span> Lokal · perangkat ini';
+  });
+  AmyamStore.subscribe((orders) => {
+    allOrders = orders;
+    render();
+  });
+</script>
+</body>
+</html>    max-width: 1080px; margin: 0 auto;
     display: flex; align-items: center; gap: 12px;
     padding: 14px 24px;
   }

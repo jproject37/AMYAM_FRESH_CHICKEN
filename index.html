@@ -33,71 +33,155 @@
   }
   .app { width: 100%; max-width: 440px; }
 
-  .brand { text-align: center; margin-bottom: 20px; }
+  /* Header / brand */
+  .brand {
+    text-align: center;
+    margin-bottom: 20px;
+  }
   .logo {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 64px; height: 64px; border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px; height: 64px;
+    border-radius: 18px;
     background: linear-gradient(160deg, var(--brand) 0%, var(--amber) 100%);
     box-shadow: 0 8px 20px rgba(229,100,88,.28);
-    font-size: 32px; margin-bottom: 12px;
+    font-size: 32px;
+    margin-bottom: 12px;
   }
-  .brand h1 { font-size: 26px; letter-spacing: .04em; font-weight: 800; line-height: 1.1; }
+  .brand h1 {
+    font-size: 26px;
+    letter-spacing: .04em;
+    font-weight: 800;
+    line-height: 1.1;
+  }
   .brand h1 .accent { color: var(--brand); }
-  .brand p { color: var(--muted); font-size: 13px; margin-top: 6px; letter-spacing: .12em; text-transform: uppercase; }
+  .brand p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 6px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
 
+  /* Card */
   .card {
-    background: var(--canvas); border: 1px solid var(--border); border-radius: 16px;
-    padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.04);
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.04);
   }
   .field { margin-bottom: 18px; }
   .field:last-of-type { margin-bottom: 8px; }
-  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
   label .num {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 20px; height: 20px; border-radius: 6px; background: #FCE9E7;
-    color: var(--brand-dark); font-size: 12px; font-weight: 700; margin-right: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    background: #FCE9E7;
+    color: var(--brand-dark);
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 8px;
   }
   input, textarea {
-    width: 100%; font-family: inherit; font-size: 16px; color: var(--ink);
-    background: var(--soft); border: 1px solid var(--border); border-radius: 10px;
-    padding: 13px 14px; transition: border-color .15s, box-shadow .15s, background .15s;
+    width: 100%;
+    font-family: inherit;
+    font-size: 16px;
+    color: var(--ink);
+    background: var(--soft);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 14px;
+    transition: border-color .15s, box-shadow .15s, background .15s;
   }
   input::placeholder, textarea::placeholder { color: #b3afa9; }
   textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
   input:focus, textarea:focus {
-    outline: none; background: #fff; border-color: var(--brand);
+    outline: none;
+    background: #fff;
+    border-color: var(--brand);
     box-shadow: 0 0 0 3px rgba(229,100,88,.15);
   }
 
   .btn {
-    width: 100%; border: none; border-radius: 12px; padding: 15px 20px;
-    font-family: inherit; font-size: 16px; font-weight: 700; letter-spacing: .02em;
-    color: #fff; background: linear-gradient(160deg, var(--brand) 0%, var(--brand-dark) 100%);
-    cursor: pointer; margin-top: 8px; box-shadow: 0 6px 16px rgba(229,100,88,.30);
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 15px 20px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: #fff;
+    background: linear-gradient(160deg, var(--brand) 0%, var(--brand-dark) 100%);
+    cursor: pointer;
+    margin-top: 8px;
+    box-shadow: 0 6px 16px rgba(229,100,88,.30);
     transition: transform .08s ease, box-shadow .15s, opacity .15s;
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
   }
   .btn:hover { box-shadow: 0 8px 22px rgba(229,100,88,.38); }
   .btn:active { transform: translateY(1px); }
 
-  .hint { text-align: center; color: var(--muted); font-size: 12px; margin-top: 14px; }
+  .hint {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 14px;
+  }
 
+  /* Success state */
   .toast {
-    position: fixed; left: 50%; bottom: 24px;
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
     transform: translateX(-50%) translateY(20px);
-    background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px;
-    font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.2);
-    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
-    display: flex; align-items: center; gap: 8px;
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   .summary {
-    margin-top: 16px; border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px; background: #E8F1EC; border-color: #cbe4d5; display: none;
+    margin-top: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    background: #E8F1EC;
+    border-color: #cbe4d5;
+    display: none;
   }
   .summary.show { display: block; }
-  .summary h3 { font-size: 14px; color: var(--green); display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+  .summary h3 {
+    font-size: 14px;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
   .summary .row { font-size: 14px; margin-bottom: 6px; }
   .summary .row span { color: var(--muted); display: block; font-size: 12px; margin-bottom: 2px; }
   .summary .row b { font-weight: 600; white-space: pre-wrap; }
@@ -121,7 +205,12 @@
         </div>
 
         <div class="field">
-          <label for="pesanan"><span class="num">2</span>Pesanan di sini</label>
+          <label for="hp"><span class="num">2</span>Nomor HP <span style="color:var(--muted);font-weight:400;">(opsional)</span></label>
+          <input id="hp" name="hp" type="tel" inputmode="tel" placeholder="Contoh: 0812xxxxxxx" autocomplete="off" />
+        </div>
+
+        <div class="field">
+          <label for="pesanan"><span class="num">3</span>Pesanan di sini</label>
           <textarea id="pesanan" name="pesanan" placeholder="Tulis pesanan Anda di sini... Contoh: Ayam potong 5 kg, dada fillet 2 kg, sayap 1 kg"></textarea>
         </div>
 
@@ -134,18 +223,34 @@
       <div class="summary" id="summary">
         <h3>✅ Pesanan Terkirim</h3>
         <div class="row"><span>Nama</span><b id="sNama"></b></div>
+        <div class="row" id="sHpRow" style="display:none"><span>Nomor HP</span><b id="sHp"></b></div>
         <div class="row"><span>Pesanan</span><b id="sPesanan"></b></div>
       </div>
 
       <p class="hint">Pastikan pesanan sudah benar sebelum mengirim.</p>
     </div>
-    <p class="hint"><a href="admin.html" style="color:var(--muted);text-decoration:none;">Masuk Admin →</a></p>
   </div>
 
   <div class="toast" id="toast">✅ Pesanan berhasil dikirim!</div>
 
 <script>
-const firebaseConfig = null;
+/*
+  AMYAM FRESH CHICKEN - Lapisan data pesanan (dipakai bersama oleh index.html & admin.html)
+
+  MODE:
+  - LOKAL (default): pesanan disimpan di localStorage & tersinkron real-time antar-tab
+    di perangkat/browser yang SAMA. Cocok untuk uji coba di satu perangkat.
+  - CLOUD (lintas perangkat, real-time): isi firebaseConfig di bawah dengan konfigurasi
+    proyek Firebase Anda. Pelanggan mengirim dari HP mereka, admin melihat masuk seketika.
+
+  Cara mengaktifkan CLOUD:
+  1. Buat proyek gratis di https://console.firebase.google.com
+  2. Tambahkan Web App, salin objek konfigurasinya.
+  3. Aktifkan Firestore Database (mode production/test).
+  4. Tempel konfigurasi ke firebaseConfig di bawah ini.
+*/
+
+const firebaseConfig = null; // <- ganti dengan objek konfigurasi Firebase untuk mode cloud
 
 window.AmyamStore = (function () {
   const KEY = "amyam_orders";
@@ -155,12 +260,24 @@ window.AmyamStore = (function () {
   let cloud = null;
   let bc = null;
 
-  function uid() { return "o_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
-  function emit() { const snap = orders.slice(); listeners.forEach((cb) => cb(snap)); }
-  function sortOrders() { orders.sort((a, b) => new Date(b.waktu) - new Date(a.waktu)); }
+  function uid() {
+    return "o_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+  function emit() {
+    const snap = orders.slice();
+    listeners.forEach((cb) => cb(snap));
+  }
+  function sortOrders() {
+    orders.sort((a, b) => new Date(b.waktu) - new Date(a.waktu));
+  }
 
+  /* ---------------- MODE LOKAL ---------------- */
   function loadLocal() {
-    try { orders = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { orders = []; }
+    try {
+      orders = JSON.parse(localStorage.getItem(KEY) || "[]");
+    } catch (e) {
+      orders = [];
+    }
     sortOrders();
   }
   function persistLocal() {
@@ -169,13 +286,32 @@ window.AmyamStore = (function () {
   }
   function initLocal() {
     loadLocal();
+    if (orders.length === 0 && window.__AMYAM_DEMO === true) {
+      const now = Date.now();
+      orders = [
+        { id: uid(), nama: "Warung Bu Sri", pesanan: "Ayam potong 5 kg\nDada fillet 2 kg", status: "Baru", waktu: new Date(now - 2 * 60000).toISOString() },
+        { id: uid(), nama: "RM Padang Sederhana", pesanan: "Ayam kampung 10 ekor\nHati ampela 1 kg", status: "Diproses", waktu: new Date(now - 18 * 60000).toISOString() },
+        { id: uid(), nama: "Toko Frozen Berkah", pesanan: "Sayap 8 kg\nPaha bawah 6 kg\nCeker 3 kg", status: "Selesai", waktu: new Date(now - 65 * 60000).toISOString() },
+        { id: uid(), nama: "Katering Melati", pesanan: "Dada fillet 4 kg", status: "Baru", waktu: new Date(now - 1 * 60000).toISOString() },
+      ];
+      sortOrders();
+    }
     try {
       bc = new BroadcastChannel("amyam_orders");
-      bc.onmessage = () => { loadLocal(); emit(); };
+      bc.onmessage = () => {
+        loadLocal();
+        emit();
+      };
     } catch (e) {}
-    window.addEventListener("storage", (e) => { if (e.key === KEY) { loadLocal(); emit(); } });
+    window.addEventListener("storage", (e) => {
+      if (e.key === KEY) {
+        loadLocal();
+        emit();
+      }
+    });
   }
 
+  /* ---------------- MODE CLOUD (Firebase Firestore) ---------------- */
   async function initCloud(cfg) {
     const appMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
     const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
@@ -190,46 +326,94 @@ window.AmyamStore = (function () {
     });
   }
 
+  /* ---------------- API PUBLIK ---------------- */
   async function addOrder(data) {
-    const order = { nama: String(data.nama || "").trim(), pesanan: String(data.pesanan || "").trim(), status: "Baru", waktu: new Date().toISOString() };
+    const order = {
+      nama: String(data.nama || "").trim(),
+      hp: String(data.hp || "").trim(),
+      pesanan: String(data.pesanan || "").trim(),
+      status: "Baru",
+      waktu: new Date().toISOString(),
+    };
     if (mode === "cloud") {
       await cloud.fs.addDoc(cloud.fs.collection(cloud.db, "orders"), order);
     } else {
-      order.id = uid(); orders.unshift(order); persistLocal(); emit();
+      order.id = uid();
+      orders.unshift(order);
+      persistLocal();
+      emit();
     }
     return order;
   }
+
   async function updateStatus(id, status) {
-    if (mode === "cloud") { await cloud.fs.updateDoc(cloud.fs.doc(cloud.db, "orders", id), { status }); }
-    else { const o = orders.find((x) => x.id === id); if (o) { o.status = status; persistLocal(); emit(); } }
+    if (mode === "cloud") {
+      await cloud.fs.updateDoc(cloud.fs.doc(cloud.db, "orders", id), { status });
+    } else {
+      const o = orders.find((x) => x.id === id);
+      if (o) {
+        o.status = status;
+        persistLocal();
+        emit();
+      }
+    }
   }
+
   async function remove(id) {
-    if (mode === "cloud") { await cloud.fs.deleteDoc(cloud.fs.doc(cloud.db, "orders", id)); }
-    else { orders = orders.filter((x) => x.id !== id); persistLocal(); emit(); }
+    if (mode === "cloud") {
+      await cloud.fs.deleteDoc(cloud.fs.doc(cloud.db, "orders", id));
+    } else {
+      orders = orders.filter((x) => x.id !== id);
+      persistLocal();
+      emit();
+    }
   }
+
   async function clearAll() {
     if (mode === "cloud") {
       const snap = await cloud.fs.getDocs(cloud.fs.collection(cloud.db, "orders"));
       await Promise.all(snap.docs.map((d) => cloud.fs.deleteDoc(d.ref)));
-    } else { orders = []; persistLocal(); emit(); }
+    } else {
+      orders = [];
+      persistLocal();
+      emit();
+    }
   }
-  function subscribe(cb) { listeners.add(cb); cb(orders.slice()); return () => listeners.delete(cb); }
-  function getMode() { return mode; }
+
+  function subscribe(cb) {
+    listeners.add(cb);
+    cb(orders.slice());
+    return () => listeners.delete(cb);
+  }
+
+  function getMode() {
+    return mode;
+  }
 
   const ready = (async () => {
     if (firebaseConfig) {
-      try { await initCloud(firebaseConfig); }
-      catch (e) { console.error("Mode cloud gagal, beralih ke mode lokal:", e); initLocal(); emit(); }
-    } else { initLocal(); emit(); }
+      try {
+        await initCloud(firebaseConfig);
+      } catch (e) {
+        console.error("Mode cloud gagal, beralih ke mode lokal:", e);
+        initLocal();
+        emit();
+      }
+    } else {
+      initLocal();
+      emit();
+    }
   })();
 
   return { subscribe, addOrder, updateStatus, remove, clearAll, getMode, ready };
 })();
+
 </script>
 <script>
   const form = document.getElementById('orderForm');
   const nama = document.getElementById('nama');
   const pesanan = document.getElementById('pesanan');
+  const hp = document.getElementById('hp');
   const toast = document.getElementById('toast');
   const summary = document.getElementById('summary');
 
@@ -245,18 +429,23 @@ window.AmyamStore = (function () {
     if (!pesanan.value.trim()) { flash(pesanan); return; }
 
     const namaVal = nama.value.trim();
+    const hpVal = hp.value.trim();
     const pesananVal = pesanan.value.trim();
 
     document.getElementById('sNama').textContent = namaVal;
+    const sHpRow = document.getElementById('sHpRow');
+    if (hpVal) { document.getElementById('sHp').textContent = hpVal; sHpRow.style.display = 'block'; }
+    else { sHpRow.style.display = 'none'; }
     document.getElementById('sPesanan').textContent = pesananVal;
     summary.classList.add('show');
 
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2600);
 
+    // Kirim pesanan ke pusat data (admin menerima secara real-time)
     try {
       await AmyamStore.ready;
-      await AmyamStore.addOrder({ nama: namaVal, pesanan: pesananVal });
+      await AmyamStore.addOrder({ nama: namaVal, hp: hpVal, pesanan: pesananVal });
     } catch (err) { console.error(err); }
 
     form.reset();

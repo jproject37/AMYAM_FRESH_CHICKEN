@@ -144,6 +144,28 @@
   .omset-panel .line:last-child { border-bottom: none; }
   .omset-panel .note { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
 
+  /* Kalkulasi Omset - modul terpisah */
+  .om-title { font-size: 16px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .om-field { margin-bottom: 14px; }
+  .om-field > label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 7px; }
+  .om-field > label span { font-weight: 500; color: var(--muted); font-size: 11px; }
+  .om-acuan { display: flex; align-items: center; gap: 10px; background: var(--soft); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .om-acuan .val { flex: 1; font-size: 15px; font-weight: 700; }
+  .om-acuan .val.empty { color: var(--muted); font-weight: 500; font-style: italic; }
+  .om-acuan .edit { border: none; background: var(--surface2); color: var(--ink); font-family: inherit; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer; min-height: 36px; white-space: nowrap; }
+  .om-acuan .edit:hover { filter: brightness(.96); }
+  .om-editrow { display: flex; gap: 8px; }
+  .om-editrow input { flex: 1; min-width: 0; font-family: inherit; font-size: 15px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+  .om-editrow .save { border: none; background: var(--green); color: #fff; font-family: inherit; font-size: 13px; font-weight: 700; padding: 0 16px; border-radius: 10px; cursor: pointer; min-height: 44px; white-space: nowrap; }
+  .om-input { width: 100%; font-family: inherit; font-size: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+  .om-input:focus, .om-editrow input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+  .om-hr { border: none; border-top: 1px dashed var(--border); margin: 18px 0; }
+  .om-calc { width: 100%; border: none; border-radius: 12px; padding: 14px; font-family: inherit; font-size: 15px; font-weight: 800; color: #fff; cursor: pointer; min-height: 50px; background: linear-gradient(160deg, var(--amber) 0%, #b9652a 100%); box-shadow: 0 6px 16px rgba(213,128,59,.28); }
+  .om-result { margin-top: 16px; }
+  .om-result .line { display: flex; justify-content: space-between; font-size: 14px; padding: 7px 0; border-bottom: 1px dashed var(--border); }
+  .om-result .line:last-child { border-bottom: none; }
+  .om-result .note { font-size: 12px; color: var(--ink); margin-top: 12px; line-height: 1.5; background: var(--orange-soft); padding: 11px 13px; border-radius: 10px; }
+
   @media (max-width: 640px) {
     .stats { grid-template-columns: repeat(2, 1fr); }
     .bar { padding: 12px 16px; }
@@ -528,19 +550,102 @@ window.AmyamStore = (function () {
     if (confirm("Kosongkan SEMUA pesanan? Tindakan ini tidak bisa dibatalkan.")) await AmyamStore.clearAll();
   });
 
+  // ====== KALKULASI OMSET (modul terpisah, tidak terhubung dengan data pesanan) ======
+  const OM_KEYS = { setor: "amyam_harga_setor", jerohan: "amyam_harga_jerohan" };
+  const OM_LABEL = { setor: "harga setor", jerohan: "harga jerohan" };
+
+  function omGet(k) { return localStorage.getItem(OM_KEYS[k]) || ""; }
+  function omSet(k, v) { localStorage.setItem(OM_KEYS[k], v); }
+  function rupiah(n) { return "Rp " + (Number(n) || 0).toLocaleString("id-ID"); }
+
+  function omAcuanRow(k) {
+    const v = omGet(k);
+    const shown = v
+      ? `<span class="val">${rupiah(v)} <span style="font-weight:500;color:var(--muted);font-size:12px">/ kg</span></span>`
+      : `<span class="val empty">Belum diatur</span>`;
+    return `<div class="om-acuan" data-row="${k}">
+        ${shown}
+        <button class="edit" data-edit="${k}">${v ? "\u270f\ufe0f Edit" : "Atur"}</button>
+      </div>`;
+  }
+
+  function renderOmset() {
+    $("omsetPanel").innerHTML = `
+      <div class="om-title">\ud83d\udcb0 Kalkulasi Omset</div>
+
+      <div class="om-field">
+        <label>Harga Setor <span>(harga acuan tetap \u00b7 per kg)</span></label>
+        ${omAcuanRow("setor")}
+      </div>
+
+      <div class="om-field">
+        <label>Harga Jerohan <span>(harga acuan tetap \u00b7 per kg)</span></label>
+        ${omAcuanRow("jerohan")}
+      </div>
+
+      <hr class="om-hr" />
+
+      <div class="om-field">
+        <label>Bobot Ayam (kg)</label>
+        <input class="om-input" type="number" inputmode="decimal" step="0.01" id="bobotAyam" placeholder="0" />
+      </div>
+
+      <div class="om-field">
+        <label>Bobot Jerohan (kg)</label>
+        <input class="om-input" type="number" inputmode="decimal" step="0.01" id="bobotJerohan" placeholder="0" />
+      </div>
+
+      <button class="om-calc" id="calcBtn">\ud83e\uddee Kalkulasi</button>
+      <div class="om-result" id="omResult"></div>
+    `;
+  }
+
+  function omEditMode(k) {
+    const row = $("omsetPanel").querySelector(`[data-row="${k}"]`);
+    if (!row) return;
+    const v = omGet(k);
+    row.outerHTML = `<div class="om-editrow" data-row="${k}">
+        <input type="number" inputmode="decimal" step="1" id="edit_${k}" value="${v}" placeholder="Masukkan ${OM_LABEL[k]} per kg" />
+        <button class="save" data-save="${k}">Simpan</button>
+      </div>`;
+    const inp = $("edit_" + k);
+    inp.focus();
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") omSavePrice(k); });
+  }
+
+  function omSavePrice(k) {
+    const inp = $("edit_" + k);
+    if (!inp) return;
+    omSet(k, String(inp.value).replace(/[^0-9.]/g, ""));
+    renderOmset();
+  }
+
+  function omCalculate() {
+    const hSetor = Number(omGet("setor")) || 0;
+    const hJerohan = Number(omGet("jerohan")) || 0;
+    const bAyam = Number($("bobotAyam").value) || 0;
+    const bJerohan = Number($("bobotJerohan").value) || 0;
+    $("omResult").innerHTML =
+      `<div class="line"><span>Harga setor (acuan)</span><b>${rupiah(hSetor)} / kg</b></div>` +
+      `<div class="line"><span>Harga jerohan (acuan)</span><b>${rupiah(hJerohan)} / kg</b></div>` +
+      `<div class="line"><span>Bobot ayam</span><b>${bAyam} kg</b></div>` +
+      `<div class="line"><span>Bobot jerohan</span><b>${bJerohan} kg</b></div>` +
+      `<div class="note">\ud83d\udcdd Rumus perhitungan omset akan dipasang di sini setelah Anda tentukan. Semua nilai di atas sudah tersimpan &amp; siap dihitung.</div>`;
+  }
+
+  // Delegasi klik di dalam panel omset
+  $("omsetPanel").addEventListener("click", (e) => {
+    const editBtn = e.target.closest("[data-edit]");
+    if (editBtn) { omEditMode(editBtn.dataset.edit); return; }
+    const saveBtn = e.target.closest("[data-save]");
+    if (saveBtn) { omSavePrice(saveBtn.dataset.save); return; }
+    if (e.target.closest("#calcBtn")) { omCalculate(); }
+  });
+
   $("omsetBtn").addEventListener("click", () => {
     const panel = $("omsetPanel");
     if (panel.classList.contains("show")) { panel.classList.remove("show"); return; }
-    const total = allOrders.length;
-    const selesai = allOrders.filter((o) => o.status === "Selesai").length;
-    const proses = allOrders.filter((o) => o.status === "Diproses").length;
-    const baru = allOrders.filter((o) => o.status === "Baru").length;
-    panel.innerHTML =
-      `<div class="line"><span>Total pesanan</span><b>${total}</b></div>` +
-      `<div class="line"><span>Selesai</span><b>${selesai}</b></div>` +
-      `<div class="line"><span>Diproses</span><b>${proses}</b></div>` +
-      `<div class="line"><span>Baru</span><b>${baru}</b></div>` +
-      `<div class="note">Perhitungan omset dalam Rupiah akan ditambahkan setelah alur harga/produk Anda tetapkan. Untuk sekarang panel ini menampilkan rekap jumlah pesanan.</div>`;
+    renderOmset();
     panel.classList.add("show");
   });
 

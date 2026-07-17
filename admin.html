@@ -171,6 +171,7 @@
   .om-result .note { font-size: 12px; color: var(--ink); margin-top: 12px; line-height: 1.5; background: var(--orange-soft); padding: 11px 13px; border-radius: 10px; }
   .om-result .om-total { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 13px 14px; background: var(--green-soft); border-radius: 12px; font-size: 16px; font-weight: 800; color: #2c7a54; }
   .om-result .om-total.minus { background: #FCE9E7; color: #c0392b; }
+  .om-result .line.om-setoran { font-size: 15px; font-weight: 800; color: var(--ink); padding: 9px 0; }
 
   @media (max-width: 640px) {
     .stats { grid-template-columns: repeat(2, 1fr); }
@@ -667,8 +668,8 @@ window.AmyamStore = (function () {
     html += `<div class="line"><span>Potongan wajib</span><b>− ${rupiah(POT_WAJIB)}</b></div>`;
     if (uangMasuk > 0) {
       const selisih = uangMasuk - omset;
-      html += `<div class="line"><span>Hasil kalkulasi (omset)</span><b>${rupiah(omset)}</b></div>`;
       html += `<div class="line"><span>Uang masuk</span><b>${rupiah(uangMasuk)}</b></div>`;
+      html += `<div class="line om-setoran"><span>JUMLAH SETORAN</span><b>${rupiah(omset)}</b></div>`;
       html += `<div class="om-total ${selisih < 0 ? "minus" : ""}"><span>SELISIH</span><b>${rupiah(selisih)}</b></div>`;
     } else {
       html += `<div class="om-total ${omset < 0 ? "minus" : ""}"><span>OMSET</span><b>${rupiah(omset)}</b></div>`;

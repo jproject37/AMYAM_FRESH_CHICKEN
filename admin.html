@@ -278,7 +278,15 @@
   4. Tempel konfigurasi ke firebaseConfig di bawah ini.
 */
 
-const firebaseConfig = null; // <- ganti dengan objek konfigurasi Firebase untuk mode cloud
+const firebaseConfig = {
+  apiKey: "AIzaSyCTFtSmVZ06ivt06E8pLdgviZZ8JT_AAEk",
+  authDomain: "amyam-fresh-chicken.firebaseapp.com",
+  projectId: "amyam-fresh-chicken",
+  storageBucket: "amyam-fresh-chicken.firebasestorage.app",
+  messagingSenderId: "301226610105",
+  appId: "1:301226610105:web:57f44c447d60e362f63a68",
+  measurementId: "G-VS67E9Z7H0"
+}; // <- mode CLOUD aktif (lintas perangkat, real-time)
 
 window.AmyamStore = (function () {
   const KEY = "amyam_orders";

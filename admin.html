@@ -159,7 +159,9 @@
   .om-editrow { display: flex; gap: 8px; }
   .om-editrow input { flex: 1; min-width: 0; font-family: inherit; font-size: 15px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
   .om-editrow .save { border: none; background: var(--green); color: #fff; font-family: inherit; font-size: 13px; font-weight: 700; padding: 0 16px; border-radius: 10px; cursor: pointer; min-height: 44px; white-space: nowrap; }
-  .om-input { width: 100%; font-family: inherit; font-size: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+  .om-input { width: 100%; font-family: inherit; font-size: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; box-sizing: border-box; }
+  .om-area { resize: vertical; min-height: 54px; line-height: 1.7; white-space: pre-wrap; }
+  .om-livetotal { font-size: 12px; font-weight: 700; color: #2c7a54; margin-top: 6px; min-height: 16px; }
   .om-input:focus, .om-editrow input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
   .om-hr { border: none; border-top: 1px dashed var(--border); margin: 18px 0; }
   .om-calc { width: 100%; border: none; border-radius: 12px; padding: 14px; font-family: inherit; font-size: 15px; font-weight: 800; color: #fff; cursor: pointer; min-height: 50px; background: linear-gradient(160deg, var(--amber) 0%, #b9652a 100%); box-shadow: 0 6px 16px rgba(213,128,59,.28); }
@@ -592,8 +594,9 @@ window.AmyamStore = (function () {
       <hr class="om-hr" />
 
       <div class="om-field">
-        <label>Bobot Ayam (kg)</label>
-        <input class="om-input" type="number" inputmode="decimal" step="0.01" id="bobotAyam" placeholder="0" />
+        <label>Bobot Ayam (kg) <span>(masukkan tiap nominal, pisah spasi / enter)</span></label>
+        <textarea class="om-input om-area" id="bobotAyam" rows="3" inputmode="decimal" placeholder="contoh: 46.5 48.5 101.5 100.8"></textarea>
+        <div class="om-livetotal" id="bobotAyamTotal"></div>
       </div>
 
       <div class="om-field">
@@ -629,15 +632,16 @@ window.AmyamStore = (function () {
   function omCalculate() {
     const hSetor = Number(omGet("setor")) || 0;
     const hJerohan = Number(omGet("jerohan")) || 0;
-    const bAyam = Number($("bobotAyam").value) || 0;
+    const wAyam = omParseWeights($("bobotAyam").value);
+    const bAyam = omTotalAyam(wAyam);
     const bJerohan = Number($("bobotJerohan").value) || 0;
     const POT_AYAM = 7;        // kg, potongan wajib bobot ayam
     const POT_JEROHAN = 5;     // kg, potongan wajib bobot jerohan
     const POT_WAJIB = 255000;  // Rp, potongan wajib
-    const netAyam = bAyam > 0 ? Math.max(0, bAyam - POT_AYAM) : 0;
+    const netAyam = bAyam > 0 ? Math.max(0, Math.round((bAyam - POT_AYAM) * 10) / 10) : 0;
     const netJerohan = bJerohan > 0 ? Math.max(0, bJerohan - POT_JEROHAN) : 0;
-    const subAyam = netAyam * hSetor;
-    const subJerohan = netJerohan * hJerohan;
+    const subAyam = Math.round(netAyam * hSetor);
+    const subJerohan = Math.round(netJerohan * hJerohan);
     const subtotal = subAyam + subJerohan;
     const omset = subtotal - POT_WAJIB;
     if (bAyam <= 0 && bJerohan <= 0) {
@@ -646,6 +650,7 @@ window.AmyamStore = (function () {
     }
     let html = "";
     if (bAyam > 0) {
+      html += `<div class="line"><span>Total bobot ayam (${wAyam.length} entri)</span><b>${bAyam} kg</b></div>`;
       html += `<div class="line"><span>Ayam: ${bAyam} − ${POT_AYAM} kg = ${netAyam} kg × ${rupiah(hSetor)}</span><b>${rupiah(subAyam)}</b></div>`;
     }
     if (bJerohan > 0) {
@@ -656,6 +661,29 @@ window.AmyamStore = (function () {
     html += `<div class="om-total ${omset < 0 ? "minus" : ""}"><span>OMSET</span><b>${rupiah(omset)}</b></div>`;
     $("omResult").innerHTML = html;
   }
+
+  // Parsing bobot ayam: banyak nominal kecil -> total (1 desimal, dipangkas)
+  function omParseWeights(str) {
+    const m = String(str || "").match(/\d+(?:[.,]\d+)?/g);
+    return m ? m.map((s) => Number(s.replace(",", "."))) : [];
+  }
+  function omTotalAyam(weights) {
+    const arr = Array.isArray(weights) ? weights : omParseWeights(weights);
+    const sumRaw = arr.reduce((a, b) => a + b, 0);
+    const sum2 = Math.round(sumRaw * 100) / 100;   // bersihkan noise float
+    return Math.floor(sum2 * 10) / 10;             // pakai 1 desimal saja
+  }
+  function omUpdateAyamTotal() {
+    const el = $("bobotAyamTotal");
+    if (!el) return;
+    const w = omParseWeights($("bobotAyam").value);
+    el.textContent = w.length ? `∑ Total bobot ayam: ${omTotalAyam(w)} kg  ·  ${w.length} entri` : "";
+  }
+
+  // Update total bobot ayam secara live saat mengetik
+  $("omsetPanel").addEventListener("input", (e) => {
+    if (e.target && e.target.id === "bobotAyam") omUpdateAyamTotal();
+  });
 
   // Delegasi klik di dalam panel omset
   $("omsetPanel").addEventListener("click", (e) => {

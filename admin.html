@@ -604,6 +604,12 @@ window.AmyamStore = (function () {
         <input class="om-input" type="number" inputmode="decimal" step="0.01" id="bobotJerohan" placeholder="0" />
       </div>
 
+      <div class="om-field">
+        <label>Uang Masuk (Rp) <span>(uang yang diterima)</span></label>
+        <input class="om-input" type="text" inputmode="numeric" id="uangMasuk" placeholder="contoh: 9.000.000" />
+        <div class="om-livetotal" id="uangMasukPreview"></div>
+      </div>
+
       <button class="om-calc" id="calcBtn">\ud83e\uddee Kalkulasi</button>
       <div class="om-result" id="omResult"></div>
     `;
@@ -635,6 +641,7 @@ window.AmyamStore = (function () {
     const wAyam = omParseWeights($("bobotAyam").value);
     const bAyam = omTotalAyam(wAyam);
     const bJerohan = Number($("bobotJerohan").value) || 0;
+    const uangMasuk = omUang($("uangMasuk").value);
     const POT_AYAM = 7;        // kg, potongan wajib bobot ayam
     const POT_JEROHAN = 5;     // kg, potongan wajib bobot jerohan
     const POT_WAJIB = 255000;  // Rp, potongan wajib
@@ -658,7 +665,14 @@ window.AmyamStore = (function () {
     }
     html += `<div class="line"><span>Subtotal</span><b>${rupiah(subtotal)}</b></div>`;
     html += `<div class="line"><span>Potongan wajib</span><b>− ${rupiah(POT_WAJIB)}</b></div>`;
-    html += `<div class="om-total ${omset < 0 ? "minus" : ""}"><span>OMSET</span><b>${rupiah(omset)}</b></div>`;
+    if (uangMasuk > 0) {
+      const selisih = uangMasuk - omset;
+      html += `<div class="line"><span>Hasil kalkulasi (omset)</span><b>${rupiah(omset)}</b></div>`;
+      html += `<div class="line"><span>Uang masuk</span><b>${rupiah(uangMasuk)}</b></div>`;
+      html += `<div class="om-total ${selisih < 0 ? "minus" : ""}"><span>SELISIH</span><b>${rupiah(selisih)}</b></div>`;
+    } else {
+      html += `<div class="om-total ${omset < 0 ? "minus" : ""}"><span>OMSET</span><b>${rupiah(omset)}</b></div>`;
+    }
     $("omResult").innerHTML = html;
   }
 
@@ -680,9 +694,21 @@ window.AmyamStore = (function () {
     el.textContent = w.length ? `∑ Total bobot ayam: ${omTotalAyam(w)} kg  ·  ${w.length} entri` : "";
   }
 
-  // Update total bobot ayam secara live saat mengetik
+  function omUang(str) {
+    return Number(String(str || "").replace(/[^\d]/g, "")) || 0;
+  }
+  function omUpdateUangPreview() {
+    const el = $("uangMasukPreview");
+    if (!el) return;
+    const v = omUang($("uangMasuk").value);
+    el.textContent = v ? `= ${rupiah(v)}` : "";
+  }
+
+  // Update total & preview secara live saat mengetik
   $("omsetPanel").addEventListener("input", (e) => {
-    if (e.target && e.target.id === "bobotAyam") omUpdateAyamTotal();
+    if (!e.target) return;
+    if (e.target.id === "bobotAyam") omUpdateAyamTotal();
+    if (e.target.id === "uangMasuk") omUpdateUangPreview();
   });
 
   // Delegasi klik di dalam panel omset

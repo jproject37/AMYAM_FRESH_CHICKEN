@@ -1001,8 +1001,9 @@ window.AmyamStore = (function () {
           statusEl.innerHTML = '<span class="err">❌ Angka tidak terbaca. Coba foto lebih dekat/jelas, atau isi manual.</span>';
           return;
         }
-        $("bobotJerohan").value = num;
-        statusEl.innerHTML = '<span class="ok">✅ Terbaca: <b>' + num + '</b> kg — terisi. Cek & koreksi bila perlu.</span>';
+        const numJer = Math.floor(num);
+        $("bobotJerohan").value = numJer;
+        statusEl.innerHTML = '<span class="ok">✅ Terbaca: <b>' + num + '</b> kg → dipakai <b>' + numJer + '</b> kg (jerohan tanpa desimal). Cek & koreksi bila perlu.</span>';
       }
     } catch (err) {
       statusEl.innerHTML = '<span class="err">❌ ' + (err && err.message ? err.message : "Gagal memproses gambar") + '</span>';

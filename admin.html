@@ -37,7 +37,7 @@
   .bar {
     max-width: 1080px; margin: 0 auto;
     display: flex; align-items: center; gap: 12px;
-    padding: 14px 24px;
+    padding: 11px 18px;
   }
   .logo {
     width: 40px; height: 40px; border-radius: 11px;
@@ -45,15 +45,15 @@
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 20px; flex: none;
   }
-  .title h1 { font-size: 16px; font-weight: 800; letter-spacing: .03em; line-height: 1.1; }
-  .title p { font-size: 12px; color: var(--muted); }
+  .brand-title { font-size: 16px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; white-space: nowrap; }
   .spacer { flex: 1; }
+  .clear-row { display: flex; justify-content: flex-end; margin: 2px 0 12px; }
   .mode-badge {
-    font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px;
-    background: var(--surface2); color: var(--muted);
-    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px; border-radius: 999px;
+    background: var(--surface2);
+    display: inline-flex; align-items: center; justify-content: center;
   }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
   .dot.live { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); animation: pulse 1.8s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
   .ghost-btn {
@@ -251,16 +251,9 @@
   <header>
     <div class="bar">
       <div class="logo">🐔</div>
-      <div class="title">
-        <h1>AMYAM FRESH CHICKEN</h1>
-        <p>Panel Admin · Pesanan Masuk</p>
-      </div>
+      <h1 class="brand-title">AMYAM FRESH CHICKEN</h1>
       <div class="spacer"></div>
-      <span class="mode-badge" id="modeBadge"><span class="dot live"></span> Real-time</span>
-      <button class="ghost-btn danger" id="clearBtn" title="Kosongkan semua pesanan">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
-        Bersihkan
-      </button>
+      <span class="mode-badge" id="modeBadge" title="Real-time aktif"><span class="dot live"></span></span>
     </div>
   </header>
 
@@ -279,6 +272,12 @@
       <button class="tab" data-f="Selesai">Selesai</button>
     </div>
 
+    <div class="clear-row">
+      <button class="ghost-btn danger" id="clearBtn" title="Kosongkan semua pesanan">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+        Bersihkan
+      </button>
+    </div>
     <div class="orders" id="orders"></div>
 
     <div class="omset">
@@ -634,7 +633,7 @@ window.AmyamStore = (function () {
         <div class="om-livetotal" id="bobotAyamTotal"></div>
         <div class="om-scan">
           <label class="om-scan-btn">📷 Scan foto timbangan → tambah ke Bobot Ayam
-            <input type="file" accept="image/*" id="scanAyam" hidden />
+            <input type="file" accept="image/*" id="scanAyam" multiple hidden />
           </label>
           <div class="om-scan-status" id="scanAyamStatus"></div>
         </div>
@@ -877,26 +876,38 @@ window.AmyamStore = (function () {
     return Math.floor(pick * 10) / 10; // xx.xx -> xx.x (dipangkas, bukan dibulatkan)
   }
   async function handleScan(input, target) {
-    const file = input.files && input.files[0];
+    const files = input.files ? Array.from(input.files) : [];
     input.value = "";
-    if (!file) return;
+    if (!files.length) return;
     const statusEl = $(target === "ayam" ? "scanAyamStatus" : "scanJerohanStatus");
     try {
       const worker = await getOcrWorker(statusEl);
-      statusEl.innerHTML = '<span class="load">🔍 Membaca angka dari gambar...</span>';
-      const cv = await preprocessImage(file);
-      const rec = await worker.recognize(cv);
-      const num = parseScanNumber(rec && rec.data ? rec.data.text : "");
-      if (num === null) {
-        statusEl.innerHTML = '<span class="err">❌ Angka tidak terbaca. Coba foto lebih dekat/jelas, atau isi manual.</span>';
-        return;
-      }
       if (target === "ayam") {
         const ta = $("bobotAyam");
-        ta.value = (ta.value.trim() ? ta.value.trim() + " " : "") + num;
+        let okCount = 0, failCount = 0;
+        for (let idx = 0; idx < files.length; idx++) {
+          statusEl.innerHTML = '<span class="load">🔍 Membaca gambar ' + (idx + 1) + ' dari ' + files.length + '...</span>';
+          const cv = await preprocessImage(files[idx]);
+          const rec = await worker.recognize(cv);
+          const num = parseScanNumber(rec && rec.data ? rec.data.text : "");
+          if (num === null) { failCount++; continue; }
+          ta.value = (ta.value.trim() ? ta.value.trim() + " " : "") + num;
+          okCount++;
+        }
         omUpdateAyamTotal();
-        statusEl.innerHTML = '<span class="ok">✅ Terbaca: <b>' + num + '</b> kg — ditambahkan. Cek & koreksi bila perlu.</span>';
+        let msg = '<span class="ok">✅ ' + okCount + ' gambar terbaca & ditambahkan.</span>';
+        if (failCount) msg += ' <span class="err">❌ ' + failCount + ' gagal dibaca (isi manual).</span>';
+        msg += ' <span class="ok">Cek & koreksi bila perlu.</span>';
+        statusEl.innerHTML = msg;
       } else {
+        statusEl.innerHTML = '<span class="load">🔍 Membaca angka dari gambar...</span>';
+        const cv = await preprocessImage(files[0]);
+        const rec = await worker.recognize(cv);
+        const num = parseScanNumber(rec && rec.data ? rec.data.text : "");
+        if (num === null) {
+          statusEl.innerHTML = '<span class="err">❌ Angka tidak terbaca. Coba foto lebih dekat/jelas, atau isi manual.</span>';
+          return;
+        }
         $("bobotJerohan").value = num;
         statusEl.innerHTML = '<span class="ok">✅ Terbaca: <b>' + num + '</b> kg — terisi. Cek & koreksi bila perlu.</span>';
       }
@@ -932,8 +943,9 @@ window.AmyamStore = (function () {
     const mode = AmyamStore.getMode();
     $("modeBadge").innerHTML =
       mode === "cloud"
-        ? '<span class="dot live"></span> Cloud · real-time'
-        : '<span class="dot live"></span> Lokal · perangkat ini';
+        ? '<span class="dot live"></span>'
+        : '<span class="dot"></span>';
+    $("modeBadge").title = mode === "cloud" ? "Real-time aktif (cloud)" : "Mode lokal (perangkat ini)";
   });
   AmyamStore.subscribe((orders) => {
     allOrders = orders;

@@ -192,6 +192,10 @@
   .om-inwrap .om-input { padding-right: 48px; }
   .om-cam { position: absolute; top: 8px; right: 8px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; background: #fff3e6; border: 1px dashed #e0a877; border-radius: 9px; font-size: 17px; cursor: pointer; z-index: 2; }
   .om-cam:active { opacity: .7; }
+  .om-ai-row { display: flex; align-items: center; gap: 10px; justify-content: space-between; background: #f3f6ff; border: 1px solid #dbe4ff; border-radius: 10px; padding: 8px 10px 8px 12px; margin-bottom: 16px; }
+  .om-ai-tag { font-size: 12px; font-weight: 700; color: #33477a; line-height: 1.4; }
+  .om-ai-btn { flex: none; border: none; background: #4c6ef5; color: #fff; font-family: inherit; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+  .om-ai-btn:active { opacity: .8; }
   .om-scan { margin-top: 9px; }
   .om-scan-btn { display: inline-flex; align-items: center; gap: 6px; background: #fff3e6; color: #c0620f; border: 1px dashed #e0a877; border-radius: 10px; padding: 9px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .om-scan-btn:active { opacity: .8; }
@@ -651,6 +655,8 @@ window.AmyamStore = (function () {
 
       <div class="om-info">ℹ️ Potongan wajib tetap: <b>Rp 255.000</b><br>Potongan bobot — ayam <b>7 kg</b>, jerohan <b>5 kg</b>.</div>
 
+      <div class="om-ai-row"><span class="om-ai-tag" id="aiTag"></span><button class="om-ai-btn" type="button" id="aiKeyBtn">🔑 Scan AI</button></div>
+
       <div class="om-field">
         <label>Harga Setor <span>(harga acuan tetap \u00b7 per kg)</span></label>
         ${omAcuanRow("setor")}
@@ -664,9 +670,9 @@ window.AmyamStore = (function () {
       <hr class="om-hr" />
 
       <div class="om-field">
-        <label>Bobot Ayam (kg) <span>(masukkan tiap nominal, pisah spasi / enter)</span></label>
+        <label>Bobot Ayam (kg) <span>(tiap timbangan tekan Enter ↵ untuk baris baru)</span></label>
         <div class="om-inwrap">
-          <textarea class="om-input om-area" id="bobotAyam" rows="3" inputmode="decimal" placeholder="contoh: 46.5 48.5 101.5 100.8"></textarea>
+          <textarea class="om-input om-area" id="bobotAyam" rows="4" inputmode="decimal" enterkeyhint="enter" placeholder="25.5&#10;30.1&#10;105.4"></textarea>
           <label class="om-cam" title="Scan foto timbangan (bisa pilih banyak)">📷<input type="file" accept="image/*" id="scanAyam" multiple hidden /></label>
         </div>
         <div class="om-livetotal" id="bobotAyamTotal"></div>
@@ -859,6 +865,64 @@ window.AmyamStore = (function () {
     if (e.target.id === "uangMasuk") omUpdateUangPreview();
   });
 
+  // ====== Scan AI (Google Gemini) — akurat baca layar timbangan digital ======
+  const AI_MODEL = "gemini-flash-latest";
+  function aiKey() { const k = localStorage.getItem("amyam_gemini_key"); return (k && k !== "__none__") ? k : ""; }
+  function updateAiTag() {
+    const el = $("aiTag"); if (!el) return;
+    if (aiKey()) el.innerHTML = '🤖 Scan AI: <b style="color:#2c7a54">Gemini aktif</b>';
+    else el.textContent = "Scan AI: nonaktif (pakai pembaca bawaan)";
+  }
+  function ensureAiChoice() {
+    if (localStorage.getItem("amyam_gemini_key") !== null) return;
+    const k = (prompt("Baca angka timbangan pakai AI Google Gemini? (jauh lebih akurat)\n\nTempel API Key GRATIS dari:\nhttps://aistudio.google.com/apikey\n\n(Kosongkan lalu OK = pakai pembaca bawaan)") || "").trim();
+    localStorage.setItem("amyam_gemini_key", k || "__none__");
+    updateAiTag();
+  }
+  function promptAiKey() {
+    const cur = aiKey();
+    const k = (prompt("API Key Google Gemini untuk Scan AI (akurat).\nAmbil gratis: https://aistudio.google.com/apikey\n\n\u2022 Tempel key = AKTIFKAN\n\u2022 Kosongkan lalu OK = MATIKAN (pakai bawaan)", cur) || "").trim();
+    localStorage.setItem("amyam_gemini_key", k || "__none__");
+    updateAiTag();
+    alert(k ? "\u2705 Scan AI Gemini AKTIF." : "Scan AI dimatikan \u2014 pakai pembaca bawaan.");
+  }
+  function fileToB64(file) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => { const s = String(r.result); res(s.slice(s.indexOf(",") + 1)); };
+      r.onerror = () => rej(new Error("Gagal membaca file gambar"));
+      r.readAsDataURL(file);
+    });
+  }
+  async function geminiRead(file) {
+    const key = aiKey();
+    const b64 = await fileToB64(file);
+    const body = { contents: [{ parts: [
+      { text: "Foto ini layar timbangan digital. Bacakan HANYA angka berat yang tampil. Balas cuma angkanya dalam kilogram, pakai TITIK sebagai desimal, tanpa satuan/kata lain. Contoh balasan: 30.6" },
+      { inline_data: { mime_type: file.type || "image/jpeg", data: b64 } }
+    ] }], generationConfig: { temperature: 0 } };
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + AI_MODEL + ":generateContent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify(body)
+    });
+    if (res.status === 400 || res.status === 403) { localStorage.removeItem("amyam_gemini_key"); updateAiTag(); throw new Error("API Key AI salah/ditolak \u2014 scan lagi lalu tempel key yang benar."); }
+    if (!res.ok) throw new Error("AI error " + res.status + " (cek koneksi/kuota)");
+    const data = await res.json();
+    const parts = ((((data.candidates || [])[0] || {}).content) || {}).parts || [];
+    const raw = parts.map((p) => p.text || "").join(" ");
+    const m = raw.match(/\d+(?:\.\d+)?/);
+    if (!m) return null;
+    return Math.floor(parseFloat(m[0]) * 10) / 10;
+  }
+  async function readOne(file, statusEl) {
+    if (aiKey()) return await geminiRead(file);
+    const worker = await getOcrWorker(statusEl);
+    const cv = await preprocessImage(file);
+    const rec = await worker.recognize(cv);
+    return parseScanNumber(rec && rec.data ? rec.data.text : "");
+  }
+
   // ====== OCR: baca angka bobot dari foto timbangan (client-side, gambar tidak disimpan) ======
   let ocrWorker = null;
   function loadTesseract() {
@@ -913,17 +977,16 @@ window.AmyamStore = (function () {
     if (!files.length) return;
     const statusEl = $(target === "ayam" ? "scanAyamStatus" : "scanJerohanStatus");
     try {
-      const worker = await getOcrWorker(statusEl);
+      ensureAiChoice();
+      const useAi = !!aiKey();
       if (target === "ayam") {
         const ta = $("bobotAyam");
         let okCount = 0, failCount = 0;
         for (let idx = 0; idx < files.length; idx++) {
-          statusEl.innerHTML = '<span class="load">🔍 Membaca gambar ' + (idx + 1) + ' dari ' + files.length + '...</span>';
-          const cv = await preprocessImage(files[idx]);
-          const rec = await worker.recognize(cv);
-          const num = parseScanNumber(rec && rec.data ? rec.data.text : "");
+          statusEl.innerHTML = '<span class="load">🔍 Membaca gambar ' + (idx + 1) + ' dari ' + files.length + (useAi ? ' (AI)...' : '...') + '</span>';
+          const num = await readOne(files[idx], statusEl);
           if (num === null) { failCount++; continue; }
-          ta.value = (ta.value.trim() ? ta.value.trim() + " " : "") + num;
+          ta.value = (ta.value.trim() ? ta.value.trim() + "\n" : "") + num;
           okCount++;
         }
         omUpdateAyamTotal();
@@ -932,10 +995,8 @@ window.AmyamStore = (function () {
         msg += ' <span class="ok">Cek & koreksi bila perlu.</span>';
         statusEl.innerHTML = msg;
       } else {
-        statusEl.innerHTML = '<span class="load">🔍 Membaca angka dari gambar...</span>';
-        const cv = await preprocessImage(files[0]);
-        const rec = await worker.recognize(cv);
-        const num = parseScanNumber(rec && rec.data ? rec.data.text : "");
+        statusEl.innerHTML = '<span class="load">🔍 Membaca angka dari gambar' + (useAi ? ' (AI)' : '') + '...</span>';
+        const num = await readOne(files[0], statusEl);
         if (num === null) {
           statusEl.innerHTML = '<span class="err">❌ Angka tidak terbaca. Coba foto lebih dekat/jelas, atau isi manual.</span>';
           return;
@@ -959,6 +1020,7 @@ window.AmyamStore = (function () {
     if (editBtn) { omEditMode(editBtn.dataset.edit); return; }
     const saveBtn = e.target.closest("[data-save]");
     if (saveBtn) { omSavePrice(saveBtn.dataset.save); return; }
+    if (e.target.closest("#aiKeyBtn")) { promptAiKey(); return; }
     if (e.target.closest("#calcBtn")) { omCalculate(); return; }
     if (e.target.closest("#strukBtn")) { openStruk(); return; }
   });
@@ -971,7 +1033,7 @@ window.AmyamStore = (function () {
     window.scrollTo(0, 0);
   }
   $("goPesanan").addEventListener("click", () => showScreen("pesanan"));
-  $("goOmset").addEventListener("click", () => { renderOmset(); showScreen("omset"); });
+  $("goOmset").addEventListener("click", () => { renderOmset(); updateAiTag(); showScreen("omset"); });
   document.querySelectorAll("[data-home]").forEach((b) => b.addEventListener("click", () => showScreen("home")));
 
   // Langganan data real-time

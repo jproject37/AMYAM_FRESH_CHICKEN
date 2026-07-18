@@ -172,6 +172,32 @@
   .om-result .om-total { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 13px 14px; background: var(--green-soft); border-radius: 12px; font-size: 16px; font-weight: 800; color: #2c7a54; }
   .om-result .om-total.minus { background: #FCE9E7; color: #c0392b; }
   .om-result .line.om-setoran { font-size: 15px; font-weight: 800; color: var(--ink); padding: 9px 0; }
+  .om-struk { width: 100%; margin-top: 14px; padding: 13px; border: 0; border-radius: 12px; background: #2c7a54; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .om-struk:active { opacity: .85; }
+  .om-scan { margin-top: 9px; }
+  .om-scan-btn { display: inline-flex; align-items: center; gap: 6px; background: #fff3e6; color: #c0620f; border: 1px dashed #e0a877; border-radius: 10px; padding: 9px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .om-scan-btn:active { opacity: .8; }
+  .om-scan-status { font-size: 12px; margin-top: 6px; line-height: 1.5; }
+  .om-scan-status .load { color: #8a6d3b; }
+  .om-scan-status .ok { color: #2c7a54; }
+  .om-scan-status .ok b { font-size: 14px; }
+  .om-scan-status .err { color: #c0392b; }
+  .struk-ov { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 20px; z-index: 9999; }
+  .struk-card { background: #fff; width: 100%; max-width: 340px; border-radius: 16px; padding: 26px 24px; box-shadow: 0 12px 44px rgba(0,0,0,.32); font-family: 'Courier New', monospace; text-align: center; }
+  .struk-brand { font-size: 19px; font-weight: 800; color: #c0620f; }
+  .struk-sub { font-size: 12px; letter-spacing: 4px; color: #999; margin-top: 5px; }
+  .struk-sep { border-top: 2px dashed #ddd; margin: 15px 0; }
+  .struk-row { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; color: #444; }
+  .struk-row b { color: #111; }
+  .struk-total { display: flex; justify-content: space-between; align-items: center; background: #e8f6ee; border-radius: 11px; padding: 13px 15px; font-size: 16px; font-weight: 800; color: #2c7a54; }
+  .struk-time { font-size: 12px; color: #666; margin-top: 4px; line-height: 1.7; }
+  .struk-foot { font-size: 13px; color: #333; margin-top: 14px; font-style: italic; }
+  .struk-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .struk-btn { border: 0; border-radius: 10px; padding: 12px 18px; font-size: 14px; font-weight: 700; cursor: pointer; color: #fff; }
+  .struk-btn.print { background: #4a6cf7; }
+  .struk-btn.send { background: #25D366; }
+  .struk-btn.close { background: #8a8a8a; }
+  @media print { body > *:not(.struk-ov) { display: none !important; } .struk-ov { position: static; background: #fff; padding: 0; display: block; } .struk-ov .struk-actions { display: none !important; } .struk-card { box-shadow: none; max-width: 100%; margin: 0 auto; } }
 
   @media (max-width: 640px) {
     .stats { grid-template-columns: repeat(2, 1fr); }
@@ -606,11 +632,23 @@ window.AmyamStore = (function () {
         <label>Bobot Ayam (kg) <span>(masukkan tiap nominal, pisah spasi / enter)</span></label>
         <textarea class="om-input om-area" id="bobotAyam" rows="3" inputmode="decimal" placeholder="contoh: 46.5 48.5 101.5 100.8"></textarea>
         <div class="om-livetotal" id="bobotAyamTotal"></div>
+        <div class="om-scan">
+          <label class="om-scan-btn">📷 Scan foto timbangan → tambah ke Bobot Ayam
+            <input type="file" accept="image/*" id="scanAyam" hidden />
+          </label>
+          <div class="om-scan-status" id="scanAyamStatus"></div>
+        </div>
       </div>
 
       <div class="om-field">
         <label>Bobot Jerohan (kg)</label>
         <input class="om-input" type="number" inputmode="decimal" step="0.01" id="bobotJerohan" placeholder="0" />
+        <div class="om-scan">
+          <label class="om-scan-btn">📷 Scan foto timbangan → isi Bobot Jerohan
+            <input type="file" accept="image/*" id="scanJerohan" hidden />
+          </label>
+          <div class="om-scan-status" id="scanJerohanStatus"></div>
+        </div>
       </div>
 
       <div class="om-field">
@@ -682,10 +720,80 @@ window.AmyamStore = (function () {
     } else {
       html += `<div class="om-total ${omset < 0 ? "minus" : ""}"><span>OMSET</span><b>${rupiah(omset)}</b></div>`;
     }
+    window.__omLast = { bAyam: bAyam, bJerohan: bJerohan, omset: omset };
+    html += `<button class="om-struk" id="strukBtn">🧾 Cetak / Kirim Struk Setoran</button>`;
     $("omResult").innerHTML = html;
   }
 
-  // Parsing bobot ayam: banyak nominal kecil -> total (1 desimal, dipangkas)
+  function openStruk() {
+    const d = window.__omLast;
+    if (!d) { alert('Lakukan Kalkulasi dulu sebelum cetak struk ya.'); return; }
+    const now = new Date();
+    const hari = now.toLocaleDateString('id-ID', { weekday: 'long' });
+    const tgl  = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    const jam  = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+    const ov = document.createElement('div');
+    ov.className = 'struk-ov'; ov.id = 'strukOv';
+    ov.innerHTML =
+      '<div class="struk-card" id="strukCard">' +
+        '<div class="struk-brand">🐔 AMYAM FRESH CHICKEN</div>' +
+        '<div class="struk-sub">STRUK SETORAN</div>' +
+        '<div class="struk-sep"></div>' +
+        '<div class="struk-row"><span>Total Bobot Ayam</span><b>' + d.bAyam + ' Kg</b></div>' +
+        '<div class="struk-row"><span>Total Bobot Jerohan</span><b>' + d.bJerohan + ' Kg</b></div>' +
+        '<div class="struk-sep"></div>' +
+        '<div class="struk-total"><span>JUMLAH SETORAN</span><b>' + rupiah(d.omset) + '</b></div>' +
+        '<div class="struk-sep"></div>' +
+        '<div class="struk-time">' + hari + ', ' + tgl + '<br>Pukul ' + jam + ' WIB</div>' +
+        '<div class="struk-foot">Terima kasih 🙏</div>' +
+      '</div>' +
+      '<div class="struk-actions">' +
+        '<button class="struk-btn print" id="strukPrintBtn">🖨️ Cetak</button>' +
+        '<button class="struk-btn send" id="strukSendBtn">📤 Kirim</button>' +
+        '<button class="struk-btn close" id="strukCloseBtn">✕ Tutup</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', (e) => { if (e.target === ov) ov.remove(); });
+    document.getElementById('strukCloseBtn').onclick = () => ov.remove();
+    document.getElementById('strukPrintBtn').onclick = () => window.print();
+    document.getElementById('strukSendBtn').onclick = () => shareStruk(d, hari, tgl, jam);
+  }
+
+  function shareStruk(d, hari, tgl, jam) {
+    const W = 620, H = 560, s = 2;
+    const cv = document.createElement('canvas'); cv.width = W * s; cv.height = H * s;
+    const c = cv.getContext('2d'); c.scale(s, s);
+    c.fillStyle = '#ffffff'; c.fillRect(0, 0, W, H);
+    c.strokeStyle = '#e2c9a8'; c.lineWidth = 3; c.strokeRect(16, 16, W - 32, H - 32);
+    c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+    c.fillStyle = '#c0620f'; c.font = 'bold 27px Arial'; c.fillText('🐔 AMYAM FRESH CHICKEN', W / 2, 66);
+    c.fillStyle = '#999999'; c.font = '14px Arial'; c.fillText('S T R U K   S E T O R A N', W / 2, 96);
+    const dash = (y) => { c.strokeStyle = '#cccccc'; c.lineWidth = 1.5; c.setLineDash([7, 6]); c.beginPath(); c.moveTo(44, y); c.lineTo(W - 44, y); c.stroke(); c.setLineDash([]); };
+    dash(122);
+    const row = (label, val, y) => { c.textAlign = 'left'; c.fillStyle = '#666666'; c.font = '19px Arial'; c.fillText(label, 48, y); c.textAlign = 'right'; c.fillStyle = '#222222'; c.font = 'bold 21px Arial'; c.fillText(val, W - 48, y); };
+    row('Total Bobot Ayam', d.bAyam + ' Kg', 166);
+    row('Total Bobot Jerohan', d.bJerohan + ' Kg', 206);
+    dash(234);
+    c.fillStyle = '#e8f6ee'; c.fillRect(44, 256, W - 88, 68);
+    c.textAlign = 'left'; c.fillStyle = '#2c7a54'; c.font = 'bold 20px Arial'; c.fillText('JUMLAH SETORAN', 62, 298);
+    c.textAlign = 'right'; c.font = 'bold 24px Arial'; c.fillText(rupiah(d.omset), W - 62, 298);
+    dash(356);
+    c.textAlign = 'center'; c.fillStyle = '#555555'; c.font = '16px Arial'; c.fillText(hari + ', ' + tgl, W / 2, 394);
+    c.fillText('Pukul ' + jam + ' WIB', W / 2, 420);
+    c.fillStyle = '#333333'; c.font = 'italic 16px Arial'; c.fillText('Terima kasih 🙏', W / 2, 476);
+    cv.toBlob(async (blob) => {
+      const file = new File([blob], 'struk-setoran-amyam.png', { type: 'image/png' });
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'Struk Setoran AMYAM', text: 'Struk Setoran AMYAM FRESH CHICKEN' });
+          return;
+        }
+      } catch (err) { if (err && err.name === 'AbortError') return; }
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'struk-setoran-amyam.png'; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 1500);
+    }, 'image/png');
+  }
+
+  // Parsing bobot ayam: banyak nominal kecil -> total
   function omParseWeights(str) {
     const m = String(str || "").match(/\d+(?:[.,]\d+)?/g);
     return m ? m.map((s) => Number(s.replace(",", "."))) : [];
@@ -694,7 +802,7 @@ window.AmyamStore = (function () {
     const arr = Array.isArray(weights) ? weights : omParseWeights(weights);
     const sumRaw = arr.reduce((a, b) => a + b, 0);
     const sum2 = Math.round(sumRaw * 100) / 100;   // bersihkan noise float
-    return Math.floor(sum2 * 10) / 10;             // pakai 1 desimal saja
+    return Math.floor(sum2);                       // total bobot ayam tanpa desimal
   }
   function omUpdateAyamTotal() {
     const el = $("bobotAyamTotal");
@@ -720,13 +828,96 @@ window.AmyamStore = (function () {
     if (e.target.id === "uangMasuk") omUpdateUangPreview();
   });
 
+  // ====== OCR: baca angka bobot dari foto timbangan (client-side, gambar tidak disimpan) ======
+  let ocrWorker = null;
+  function loadTesseract() {
+    if (window.Tesseract) return Promise.resolve();
+    return new Promise((res, rej) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+      s.onload = () => res();
+      s.onerror = () => rej(new Error("Gagal memuat mesin OCR (butuh internet)"));
+      document.head.appendChild(s);
+    });
+  }
+  async function getOcrWorker(statusEl) {
+    if (ocrWorker) return ocrWorker;
+    if (statusEl) statusEl.innerHTML = '<span class="load">⏳ Menyiapkan mesin OCR (sekali saja, ~beberapa detik)...</span>';
+    await loadTesseract();
+    ocrWorker = await window.Tesseract.createWorker("eng");
+    await ocrWorker.setParameters({ tessedit_char_whitelist: "0123456789." });
+    return ocrWorker;
+  }
+  async function preprocessImage(file) {
+    const bmp = await createImageBitmap(file);
+    const maxW = 900;
+    const scale = bmp.width > maxW ? maxW / bmp.width : 1.5;
+    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    const cx = cv.getContext("2d"); cx.drawImage(bmp, 0, 0, w, h);
+    const im = cx.getImageData(0, 0, w, h); const p = im.data;
+    for (let i = 0; i < p.length; i += 4) {
+      let g = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2];
+      g = (g - 128) * 1.7 + 128;
+      g = g < 0 ? 0 : g > 255 ? 255 : g;
+      p[i] = p[i + 1] = p[i + 2] = g;
+    }
+    cx.putImageData(im, 0, 0);
+    return cv;
+  }
+  function parseScanNumber(text) {
+    const t = String(text || "").replace(/[^0-9.\s]/g, " ");
+    const all = t.match(/\d+(?:\.\d+)?/g);
+    if (!all) return null;
+    const plaus = all.filter((s) => { const n = Number(s); return isFinite(n) && n > 0 && n < 1000; });
+    if (!plaus.length) return null;
+    const withDot = plaus.filter((s) => s.includes("."));
+    const pool = withDot.length ? withDot : plaus;
+    const pick = pool.map(Number).sort((a, b) => b - a)[0];
+    return Math.floor(pick * 10) / 10; // xx.xx -> xx.x (dipangkas, bukan dibulatkan)
+  }
+  async function handleScan(input, target) {
+    const file = input.files && input.files[0];
+    input.value = "";
+    if (!file) return;
+    const statusEl = $(target === "ayam" ? "scanAyamStatus" : "scanJerohanStatus");
+    try {
+      const worker = await getOcrWorker(statusEl);
+      statusEl.innerHTML = '<span class="load">🔍 Membaca angka dari gambar...</span>';
+      const cv = await preprocessImage(file);
+      const rec = await worker.recognize(cv);
+      const num = parseScanNumber(rec && rec.data ? rec.data.text : "");
+      if (num === null) {
+        statusEl.innerHTML = '<span class="err">❌ Angka tidak terbaca. Coba foto lebih dekat/jelas, atau isi manual.</span>';
+        return;
+      }
+      if (target === "ayam") {
+        const ta = $("bobotAyam");
+        ta.value = (ta.value.trim() ? ta.value.trim() + " " : "") + num;
+        omUpdateAyamTotal();
+        statusEl.innerHTML = '<span class="ok">✅ Terbaca: <b>' + num + '</b> kg — ditambahkan. Cek & koreksi bila perlu.</span>';
+      } else {
+        $("bobotJerohan").value = num;
+        statusEl.innerHTML = '<span class="ok">✅ Terbaca: <b>' + num + '</b> kg — terisi. Cek & koreksi bila perlu.</span>';
+      }
+    } catch (err) {
+      statusEl.innerHTML = '<span class="err">❌ ' + (err && err.message ? err.message : "Gagal memproses gambar") + '</span>';
+    }
+  }
+  $("omsetPanel").addEventListener("change", (e) => {
+    if (!e.target) return;
+    if (e.target.id === "scanAyam") handleScan(e.target, "ayam");
+    if (e.target.id === "scanJerohan") handleScan(e.target, "jerohan");
+  });
+
   // Delegasi klik di dalam panel omset
   $("omsetPanel").addEventListener("click", (e) => {
     const editBtn = e.target.closest("[data-edit]");
     if (editBtn) { omEditMode(editBtn.dataset.edit); return; }
     const saveBtn = e.target.closest("[data-save]");
     if (saveBtn) { omSavePrice(saveBtn.dataset.save); return; }
-    if (e.target.closest("#calcBtn")) { omCalculate(); }
+    if (e.target.closest("#calcBtn")) { omCalculate(); return; }
+    if (e.target.closest("#strukBtn")) { openStruk(); return; }
   });
 
   $("omsetBtn").addEventListener("click", () => {

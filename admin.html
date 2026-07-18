@@ -128,6 +128,20 @@
   .empty .ico { font-size: 40px; margin-bottom: 12px; }
   .empty h3 { font-size: 16px; color: var(--ink); margin-bottom: 6px; }
 
+  .screen[hidden] { display: none; }
+  .menu { max-width: 480px; margin: 26px auto; display: flex; flex-direction: column; gap: 16px; }
+  .menu-btn { display: flex; align-items: center; gap: 16px; text-align: left; width: 100%; border: none; border-radius: 18px; padding: 22px 20px; cursor: pointer; font-family: inherit; color: #fff; position: relative; min-height: 100px; box-shadow: 0 8px 22px rgba(0,0,0,.10); }
+  .menu-btn.pesanan { background: linear-gradient(150deg, #4aa46f 0%, #2f7a52 100%); }
+  .menu-btn.omset { background: linear-gradient(150deg, var(--amber) 0%, #b9652a 100%); }
+  .menu-btn:active { transform: translateY(1px); }
+  .menu-ico { font-size: 34px; flex: none; }
+  .menu-tx { display: flex; flex-direction: column; gap: 3px; }
+  .menu-tx b { font-size: 19px; font-weight: 800; }
+  .menu-tx small { font-size: 12.5px; font-weight: 500; opacity: .92; }
+  .menu-badge { position: absolute; top: 14px; right: 16px; background: #fff; color: #c0392b; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; }
+  .menu-badge:empty { display: none; }
+  .back-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; margin-bottom: 16px; }
+  .back-btn:active { opacity: .8; }
   .omset { margin-top: 28px; text-align: center; }
   .omset-btn {
     border: none; border-radius: 12px; padding: 14px 22px; font-family: inherit;
@@ -174,6 +188,10 @@
   .om-result .line.om-setoran { font-size: 15px; font-weight: 800; color: var(--ink); padding: 9px 0; }
   .om-struk { width: 100%; margin-top: 14px; padding: 13px; border: 0; border-radius: 12px; background: #2c7a54; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
   .om-struk:active { opacity: .85; }
+  .om-inwrap { position: relative; }
+  .om-inwrap .om-input { padding-right: 48px; }
+  .om-cam { position: absolute; top: 8px; right: 8px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; background: #fff3e6; border: 1px dashed #e0a877; border-radius: 9px; font-size: 17px; cursor: pointer; z-index: 2; }
+  .om-cam:active { opacity: .7; }
   .om-scan { margin-top: 9px; }
   .om-scan-btn { display: inline-flex; align-items: center; gap: 6px; background: #fff3e6; color: #c0620f; border: 1px dashed #e0a877; border-radius: 10px; padding: 9px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .om-scan-btn:active { opacity: .8; }
@@ -258,31 +276,48 @@
   </header>
 
   <main>
-    <div class="stats">
-      <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Total</div></div>
-      <div class="stat baru"><div class="n" id="stBaru">0</div><div class="l">Baru</div></div>
-      <div class="stat proses"><div class="n" id="stProses">0</div><div class="l">Diproses</div></div>
-      <div class="stat selesai"><div class="n" id="stSelesai">0</div><div class="l">Selesai</div></div>
+    <div class="screen" id="screenHome">
+      <div class="menu">
+        <button class="menu-btn pesanan" id="goPesanan">
+          <span class="menu-ico">📥</span>
+          <span class="menu-tx"><b>Pesanan Masuk</b><small>Lihat &amp; proses pesanan pelanggan</small></span>
+          <span class="menu-badge" id="menuBaru"></span>
+        </button>
+        <button class="menu-btn omset" id="goOmset">
+          <span class="menu-ico">💰</span>
+          <span class="menu-tx"><b>Kalkulator Omset</b><small>Hitung setoran &amp; cetak struk</small></span>
+        </button>
+      </div>
     </div>
 
-    <div class="tabs" id="tabs">
-      <button class="tab active" data-f="all">Semua</button>
-      <button class="tab" data-f="Baru">Baru</button>
-      <button class="tab" data-f="Diproses">Diproses</button>
-      <button class="tab" data-f="Selesai">Selesai</button>
+    <div class="screen" id="screenPesanan" hidden>
+      <button class="back-btn" data-home>← Menu</button>
+      <div class="stats">
+        <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Total</div></div>
+        <div class="stat baru"><div class="n" id="stBaru">0</div><div class="l">Baru</div></div>
+        <div class="stat proses"><div class="n" id="stProses">0</div><div class="l">Diproses</div></div>
+        <div class="stat selesai"><div class="n" id="stSelesai">0</div><div class="l">Selesai</div></div>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-f="all">Semua</button>
+        <button class="tab" data-f="Baru">Baru</button>
+        <button class="tab" data-f="Diproses">Diproses</button>
+        <button class="tab" data-f="Selesai">Selesai</button>
+      </div>
+
+      <div class="clear-row">
+        <button class="ghost-btn danger" id="clearBtn" title="Kosongkan semua pesanan">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+          Bersihkan
+        </button>
+      </div>
+      <div class="orders" id="orders"></div>
     </div>
 
-    <div class="clear-row">
-      <button class="ghost-btn danger" id="clearBtn" title="Kosongkan semua pesanan">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
-        Bersihkan
-      </button>
-    </div>
-    <div class="orders" id="orders"></div>
-
-    <div class="omset">
-      <button class="omset-btn" id="omsetBtn">💰 Kalkulasi Omset</button>
-      <div class="omset-panel" id="omsetPanel"></div>
+    <div class="screen" id="screenOmset" hidden>
+      <button class="back-btn" data-home>← Menu</button>
+      <div class="omset-panel show" id="omsetPanel"></div>
     </div>
   </main>
 
@@ -528,6 +563,7 @@ window.AmyamStore = (function () {
     $("stBaru").textContent = baru;
     $("stProses").textContent = proses;
     $("stSelesai").textContent = selesai;
+    const mb = $("menuBaru"); if (mb) mb.textContent = baru > 0 ? baru + " baru" : "";
 
     const list = filter === "all" ? allOrders : allOrders.filter((o) => o.status === filter);
     const wrap = $("orders");
@@ -629,25 +665,21 @@ window.AmyamStore = (function () {
 
       <div class="om-field">
         <label>Bobot Ayam (kg) <span>(masukkan tiap nominal, pisah spasi / enter)</span></label>
-        <textarea class="om-input om-area" id="bobotAyam" rows="3" inputmode="decimal" placeholder="contoh: 46.5 48.5 101.5 100.8"></textarea>
-        <div class="om-livetotal" id="bobotAyamTotal"></div>
-        <div class="om-scan">
-          <label class="om-scan-btn">📷 Scan foto timbangan → tambah ke Bobot Ayam
-            <input type="file" accept="image/*" id="scanAyam" multiple hidden />
-          </label>
-          <div class="om-scan-status" id="scanAyamStatus"></div>
+        <div class="om-inwrap">
+          <textarea class="om-input om-area" id="bobotAyam" rows="3" inputmode="decimal" placeholder="contoh: 46.5 48.5 101.5 100.8"></textarea>
+          <label class="om-cam" title="Scan foto timbangan (bisa pilih banyak)">📷<input type="file" accept="image/*" id="scanAyam" multiple hidden /></label>
         </div>
+        <div class="om-livetotal" id="bobotAyamTotal"></div>
+        <div class="om-scan-status" id="scanAyamStatus"></div>
       </div>
 
       <div class="om-field">
         <label>Bobot Jerohan (kg)</label>
-        <input class="om-input" type="number" inputmode="decimal" step="0.01" id="bobotJerohan" placeholder="0" />
-        <div class="om-scan">
-          <label class="om-scan-btn">📷 Scan foto timbangan → isi Bobot Jerohan
-            <input type="file" accept="image/*" id="scanJerohan" hidden />
-          </label>
-          <div class="om-scan-status" id="scanJerohanStatus"></div>
+        <div class="om-inwrap">
+          <input class="om-input" type="number" inputmode="decimal" step="0.01" id="bobotJerohan" placeholder="0" />
+          <label class="om-cam" title="Scan foto timbangan">📷<input type="file" accept="image/*" id="scanJerohan" hidden /></label>
         </div>
+        <div class="om-scan-status" id="scanJerohanStatus"></div>
       </div>
 
       <div class="om-field">
@@ -931,12 +963,16 @@ window.AmyamStore = (function () {
     if (e.target.closest("#strukBtn")) { openStruk(); return; }
   });
 
-  $("omsetBtn").addEventListener("click", () => {
-    const panel = $("omsetPanel");
-    if (panel.classList.contains("show")) { panel.classList.remove("show"); return; }
-    renderOmset();
-    panel.classList.add("show");
-  });
+  function showScreen(name) {
+    ["Home", "Pesanan", "Omset"].forEach((n) => {
+      const el = $("screen" + n);
+      if (el) el.hidden = n.toLowerCase() !== name;
+    });
+    window.scrollTo(0, 0);
+  }
+  $("goPesanan").addEventListener("click", () => showScreen("pesanan"));
+  $("goOmset").addEventListener("click", () => { renderOmset(); showScreen("omset"); });
+  document.querySelectorAll("[data-home]").forEach((b) => b.addEventListener("click", () => showScreen("home")));
 
   // Langganan data real-time
   AmyamStore.ready.then(() => {

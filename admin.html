@@ -196,6 +196,25 @@
   .om-ai-tag { font-size: 12px; font-weight: 700; color: #33477a; line-height: 1.4; }
   .om-ai-btn { flex: none; border: none; background: #4c6ef5; color: #fff; font-family: inherit; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
   .om-ai-btn:active { opacity: .8; }
+  .om-save-rw { width: 100%; margin-top: 10px; padding: 12px; border: 0; border-radius: 12px; background: #eef2ff; color: #3b5bdb; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .om-save-rw:active { opacity: .85; }
+  .om-save-rw:disabled { background: #e8f6ee; color: #2c7a54; }
+  .om-result .om-potitem span { color: #888; padding-left: 10px; }
+  .om-result .om-potitem b { color: #c0392b; font-weight: 700; }
+  .om-hist-row { margin: 4px 0 12px; }
+  .om-hist-btn { width: 100%; border: 1px solid #e6ddcf; background: #fff8ef; color: #b35d0a; font-family: inherit; font-size: 13px; font-weight: 700; padding: 10px; border-radius: 10px; cursor: pointer; }
+  .om-hist-btn:active { opacity: .8; }
+  .rw-card { background: #fff; width: 100%; max-width: 420px; max-height: 82vh; overflow-y: auto; border-radius: 16px; padding: 20px; box-shadow: 0 12px 44px rgba(0,0,0,.32); }
+  .rw-title { font-size: 16px; font-weight: 800; color: #b35d0a; margin-bottom: 14px; }
+  .rw-title span { display: block; font-size: 11px; font-weight: 500; color: #999; margin-top: 2px; }
+  .rw-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .rw-empty { color: #999; font-size: 14px; text-align: center; padding: 20px 0; }
+  .rw-item { border: 1px solid #eee; border-radius: 12px; padding: 12px 14px; background: #fafafa; }
+  .rw-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #333; margin-bottom: 6px; }
+  .rw-del { border: 0; background: transparent; font-size: 16px; cursor: pointer; }
+  .rw-body { font-size: 13px; color: #555; }
+  .rw-pot { font-size: 12px; color: #999; margin-top: 4px; line-height: 1.6; }
+  .rw-setoran { margin-top: 8px; font-size: 14px; color: #2c7a54; font-weight: 700; }
   .om-scan { margin-top: 9px; }
   .om-scan-btn { display: inline-flex; align-items: center; gap: 6px; background: #fff3e6; color: #c0620f; border: 1px dashed #e0a877; border-radius: 10px; padding: 9px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .om-scan-btn:active { opacity: .8; }
@@ -657,6 +676,8 @@ window.AmyamStore = (function () {
 
       <div class="om-ai-row"><span class="om-ai-tag" id="aiTag"></span><button class="om-ai-btn" type="button" id="aiKeyBtn">🔑 Scan AI</button></div>
 
+      <div class="om-hist-row"><button class="om-hist-btn" type="button" id="riwayatBtn">📜 Riwayat Setoran (7 hari)</button></div>
+
       <div class="om-field">
         <label>Harga Setor <span>(harga acuan tetap \u00b7 per kg)</span></label>
         ${omAcuanRow("setor")}
@@ -686,6 +707,12 @@ window.AmyamStore = (function () {
           <label class="om-cam" title="Scan foto timbangan">📷<input type="file" accept="image/*" id="scanJerohan" hidden /></label>
         </div>
         <div class="om-scan-status" id="scanJerohanStatus"></div>
+      </div>
+
+      <div class="om-field">
+        <label>Potongan Lain-lain (Rp) <span>(tiap belanja tekan Enter ↵ — contoh: sabun 20000)</span></label>
+        <textarea class="om-input om-area" id="potonganLain" rows="3" enterkeyhint="enter" placeholder="sabun 20000&#10;cabe 50000"></textarea>
+        <div class="om-livetotal" id="potonganLainPreview"></div>
       </div>
 
       <div class="om-field">
@@ -726,6 +753,8 @@ window.AmyamStore = (function () {
     const bAyam = omTotalAyam(wAyam);
     const bJerohan = Number($("bobotJerohan").value) || 0;
     const uangMasuk = omUang($("uangMasuk").value);
+    const potLainItems = omParsePotongan($("potonganLain").value);
+    const potLain = omTotalPotongan(potLainItems);
     const POT_AYAM = 7;        // kg, potongan wajib bobot ayam
     const POT_JEROHAN = 5;     // kg, potongan wajib bobot jerohan
     const POT_WAJIB = 255000;  // Rp, potongan wajib
@@ -735,6 +764,7 @@ window.AmyamStore = (function () {
     const subJerohan = Math.round(netJerohan * hJerohan);
     const subtotal = subAyam + subJerohan;
     const omset = subtotal - POT_WAJIB;
+    const setoran = omset - potLain;
     if (bAyam <= 0 && bJerohan <= 0) {
       $("omResult").innerHTML = `<div class="note">⚠️ Isi dulu Bobot Ayam dan/atau Bobot Jerohan, lalu ketuk Kalkulasi.</div>`;
       return;
@@ -749,17 +779,92 @@ window.AmyamStore = (function () {
     }
     html += `<div class="line"><span>Subtotal</span><b>${rupiah(subtotal)}</b></div>`;
     html += `<div class="line"><span>Potongan wajib</span><b>− ${rupiah(POT_WAJIB)}</b></div>`;
+    if (potLain > 0) {
+      potLainItems.forEach((it) => {
+        html += `<div class="line om-potitem"><span>· ${esc(it.nama)}</span><b>− ${rupiah(it.nilai)}</b></div>`;
+      });
+      html += `<div class="line"><span>Total potongan lain-lain</span><b>− ${rupiah(potLain)}</b></div>`;
+    }
     if (uangMasuk > 0) {
-      const selisih = uangMasuk - omset;
+      const selisih = uangMasuk - setoran;
       html += `<div class="line"><span>Uang masuk</span><b>${rupiah(uangMasuk)}</b></div>`;
-      html += `<div class="line om-setoran"><span>JUMLAH SETORAN</span><b>${rupiah(omset)}</b></div>`;
+      html += `<div class="line om-setoran"><span>JUMLAH SETORAN</span><b>${rupiah(setoran)}</b></div>`;
       html += `<div class="om-total ${selisih < 0 ? "minus" : ""}"><span>SELISIH</span><b>${rupiah(selisih)}</b></div>`;
     } else {
-      html += `<div class="om-total ${omset < 0 ? "minus" : ""}"><span>OMSET</span><b>${rupiah(omset)}</b></div>`;
+      html += `<div class="om-total ${setoran < 0 ? "minus" : ""}"><span>JUMLAH SETORAN</span><b>${rupiah(setoran)}</b></div>`;
     }
-    window.__omLast = { bAyam: bAyam, bJerohan: bJerohan, omset: omset };
+    window.__omLast = { bAyam: bAyam, bJerohan: bJerohan, omset: setoran, potItems: potLainItems, potLain: potLain, uangMasuk: uangMasuk };
     html += `<button class="om-struk" id="strukBtn">🧾 Cetak / Kirim Struk Setoran</button>`;
+    html += `<button class="om-save-rw" id="saveRwBtn">💾 Simpan ke Riwayat</button>`;
     $("omResult").innerHTML = html;
+  }
+
+  // ====== Riwayat setoran (localStorage, auto-hapus > 7 hari) ======
+  const RW_KEY = "amyam_riwayat";
+  const RW_MAX_MS = 7 * 24 * 60 * 60 * 1000;
+  function riwayatLoad() {
+    let arr = [];
+    try { arr = JSON.parse(localStorage.getItem(RW_KEY) || "[]"); } catch (e) { arr = []; }
+    if (!Array.isArray(arr)) arr = [];
+    const now = Date.now();
+    const kept = arr.filter((r) => r && r.waktu && (now - new Date(r.waktu).getTime()) <= RW_MAX_MS);
+    if (kept.length !== arr.length) localStorage.setItem(RW_KEY, JSON.stringify(kept));
+    return kept;
+  }
+  function riwayatStore(arr) { localStorage.setItem(RW_KEY, JSON.stringify(arr)); }
+  function saveCurrentToRiwayat(btn) {
+    const d = window.__omLast;
+    if (!d) { alert("Lakukan Kalkulasi dulu sebelum menyimpan."); return; }
+    const arr = riwayatLoad();
+    arr.unshift({
+      id: "rw_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+      waktu: new Date().toISOString(),
+      bAyam: d.bAyam, bJerohan: d.bJerohan,
+      potItems: d.potItems || [], potLain: d.potLain || 0,
+      uangMasuk: d.uangMasuk || 0, omset: d.omset
+    });
+    riwayatStore(arr);
+    if (btn) { btn.textContent = "✅ Tersimpan ke Riwayat"; btn.disabled = true; setTimeout(() => { btn.textContent = "💾 Simpan ke Riwayat"; btn.disabled = false; }, 2500); }
+  }
+  function riwayatDelete(id) {
+    riwayatStore(riwayatLoad().filter((r) => r.id !== id));
+    renderRiwayatList();
+  }
+  function renderRiwayatList() {
+    const box = document.getElementById("rwList");
+    if (!box) return;
+    const arr = riwayatLoad();
+    if (!arr.length) { box.innerHTML = '<div class="rw-empty">Belum ada riwayat tersimpan.</div>'; return; }
+    box.innerHTML = arr.map((r) => {
+      const pot = (r.potItems && r.potItems.length)
+        ? '<div class="rw-pot">' + r.potItems.map((it) => '· ' + esc(it.nama) + ' (' + rupiah(it.nilai) + ')').join('<br>') + '</div>'
+        : '';
+      return '<div class="rw-item">' +
+        '<div class="rw-head"><b>' + fmtFull(r.waktu) + '</b><button class="rw-del" data-del="' + r.id + '">🗑️</button></div>' +
+        '<div class="rw-body">Ayam <b>' + r.bAyam + '</b> kg · Jerohan <b>' + r.bJerohan + '</b> kg' +
+        (r.potLain ? ' · Potongan lain-lain ' + rupiah(r.potLain) : '') + '</div>' +
+        pot +
+        '<div class="rw-setoran">JUMLAH SETORAN: <b>' + rupiah(r.omset) + '</b></div>' +
+      '</div>';
+    }).join('');
+  }
+  function openRiwayat() {
+    const ov = document.createElement("div");
+    ov.className = "struk-ov"; ov.id = "rwOv";
+    ov.innerHTML =
+      '<div class="rw-card">' +
+        '<div class="rw-title">📜 Riwayat Setoran <span>(otomatis terhapus setelah 7 hari)</span></div>' +
+        '<div class="rw-list" id="rwList"></div>' +
+        '<button class="struk-btn close" id="rwCloseBtn">✕ Tutup</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    renderRiwayatList();
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) { ov.remove(); return; }
+      const del = e.target.closest("[data-del]");
+      if (del) { if (confirm("Hapus riwayat ini?")) riwayatDelete(del.dataset.del); return; }
+      if (e.target.closest("#rwCloseBtn")) ov.remove();
+    });
   }
 
   function openStruk() {
@@ -778,6 +883,7 @@ window.AmyamStore = (function () {
         '<div class="struk-sep"></div>' +
         '<div class="struk-row"><span>Total Bobot Ayam</span><b>' + d.bAyam + ' Kg</b></div>' +
         '<div class="struk-row"><span>Total Bobot Jerohan</span><b>' + d.bJerohan + ' Kg</b></div>' +
+        ((d.potItems && d.potItems.length) ? ('<div class="struk-sep"></div>' + d.potItems.map(function (it) { return '<div class="struk-row"><span>' + esc(it.nama) + '</span><b>− ' + rupiah(it.nilai) + '</b></div>'; }).join('') + '<div class="struk-row"><span><b>Total potongan lain-lain</b></span><b>− ' + rupiah(d.potLain) + '</b></div>') : '') +
         '<div class="struk-sep"></div>' +
         '<div class="struk-total"><span>JUMLAH SETORAN</span><b>' + rupiah(d.omset) + '</b></div>' +
         '<div class="struk-sep"></div>' +
@@ -797,27 +903,34 @@ window.AmyamStore = (function () {
   }
 
   function shareStruk(d, hari, tgl, jam) {
-    const W = 620, H = 560, s = 2;
+    const items = (d.potItems || []);
+    const W = 620, s = 2;
+    let H = 484 + (items.length ? 62 + items.length * 30 : 0);
     const cv = document.createElement('canvas'); cv.width = W * s; cv.height = H * s;
     const c = cv.getContext('2d'); c.scale(s, s);
     c.fillStyle = '#ffffff'; c.fillRect(0, 0, W, H);
     c.strokeStyle = '#e2c9a8'; c.lineWidth = 3; c.strokeRect(16, 16, W - 32, H - 32);
     c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-    c.fillStyle = '#c0620f'; c.font = 'bold 27px Arial'; c.fillText('🐔 AMYAM FRESH CHICKEN', W / 2, 66);
-    c.fillStyle = '#999999'; c.font = '14px Arial'; c.fillText('S T R U K   S E T O R A N', W / 2, 96);
+    c.fillStyle = '#c0620f'; c.font = 'bold 27px Arial'; c.fillText('🐔 AMYAM FRESH CHICKEN', W / 2, 60);
+    c.fillStyle = '#999999'; c.font = '14px Arial'; c.fillText('S T R U K   S E T O R A N', W / 2, 90);
     const dash = (y) => { c.strokeStyle = '#cccccc'; c.lineWidth = 1.5; c.setLineDash([7, 6]); c.beginPath(); c.moveTo(44, y); c.lineTo(W - 44, y); c.stroke(); c.setLineDash([]); };
-    dash(122);
-    const row = (label, val, y) => { c.textAlign = 'left'; c.fillStyle = '#666666'; c.font = '19px Arial'; c.fillText(label, 48, y); c.textAlign = 'right'; c.fillStyle = '#222222'; c.font = 'bold 21px Arial'; c.fillText(val, W - 48, y); };
-    row('Total Bobot Ayam', d.bAyam + ' Kg', 166);
-    row('Total Bobot Jerohan', d.bJerohan + ' Kg', 206);
-    dash(234);
-    c.fillStyle = '#e8f6ee'; c.fillRect(44, 256, W - 88, 68);
-    c.textAlign = 'left'; c.fillStyle = '#2c7a54'; c.font = 'bold 20px Arial'; c.fillText('JUMLAH SETORAN', 62, 298);
-    c.textAlign = 'right'; c.font = 'bold 24px Arial'; c.fillText(rupiah(d.omset), W - 62, 298);
-    dash(356);
-    c.textAlign = 'center'; c.fillStyle = '#555555'; c.font = '16px Arial'; c.fillText(hari + ', ' + tgl, W / 2, 394);
-    c.fillText('Pukul ' + jam + ' WIB', W / 2, 420);
-    c.fillStyle = '#333333'; c.font = 'italic 16px Arial'; c.fillText('Terima kasih 🙏', W / 2, 476);
+    const row = (label, val, y, opt) => { opt = opt || {}; c.textAlign = 'left'; c.fillStyle = opt.lc || '#666666'; c.font = opt.lf || '19px Arial'; c.fillText(label, opt.x || 48, y); c.textAlign = 'right'; c.fillStyle = opt.vc || '#222222'; c.font = opt.vf || 'bold 21px Arial'; c.fillText(val, W - 48, y); };
+    let y = 120;
+    dash(y); y += 4;
+    y += 40; row('Total Bobot Ayam', d.bAyam + ' Kg', y);
+    y += 40; row('Total Bobot Jerohan', d.bJerohan + ' Kg', y);
+    y += 28; dash(y);
+    items.forEach((it) => { y += 30; row(it.nama, '− ' + rupiah(it.nilai), y, { lf: '16px Arial', vf: '16px Arial', lc: '#777777', vc: '#aa2233', x: 56 }); });
+    if (items.length) { y += 34; row('Total potongan lain-lain', '− ' + rupiah(d.potLain), y, { vc: '#aa2233' }); y += 28; dash(y); }
+    y += 24; c.fillStyle = '#e8f6ee'; c.fillRect(44, y, W - 88, 68);
+    const boxY = y + 42;
+    c.textAlign = 'left'; c.fillStyle = '#2c7a54'; c.font = 'bold 20px Arial'; c.fillText('JUMLAH SETORAN', 62, boxY);
+    c.textAlign = 'right'; c.font = 'bold 24px Arial'; c.fillText(rupiah(d.omset), W - 62, boxY);
+    y += 68;
+    y += 28; dash(y);
+    y += 38; c.textAlign = 'center'; c.fillStyle = '#555555'; c.font = '16px Arial'; c.fillText(hari + ', ' + tgl, W / 2, y);
+    y += 26; c.fillText('Pukul ' + jam + ' WIB', W / 2, y);
+    y += 44; c.fillStyle = '#333333'; c.font = 'italic 16px Arial'; c.fillText('Terima kasih 🙏', W / 2, y);
     cv.toBlob(async (blob) => {
       const file = new File([blob], 'struk-setoran-amyam.png', { type: 'image/png' });
       try {
@@ -858,10 +971,38 @@ window.AmyamStore = (function () {
     el.textContent = v ? `= ${rupiah(v)}` : "";
   }
 
+  // Parsing potongan lain-lain: tiap baris "nama nominal" -> {nama, nilai}
+  function omParsePotongan(str) {
+    const lines = String(str || "").split(/\n+/);
+    const items = [];
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) continue;
+      const m = line.match(/^(.*?)[\s:=.-]*(\d[\d.,]*)\s*$/);
+      if (!m) continue;
+      const nama = (m[1] || "").trim() || "Lain-lain";
+      const nilai = Number(String(m[2]).replace(/[^\d]/g, "")) || 0;
+      if (nilai <= 0) continue;
+      items.push({ nama: nama, nilai: nilai });
+    }
+    return items;
+  }
+  function omTotalPotongan(items) {
+    return (items || []).reduce((a, b) => a + (Number(b.nilai) || 0), 0);
+  }
+  function omUpdatePotonganPreview() {
+    const el = $("potonganLainPreview");
+    if (!el) return;
+    const items = omParsePotongan($("potonganLain").value);
+    const tot = omTotalPotongan(items);
+    el.textContent = items.length ? `∑ Potongan lain-lain: ${rupiah(tot)}  ·  ${items.length} item` : "";
+  }
+
   // Update total & preview secara live saat mengetik
   $("omsetPanel").addEventListener("input", (e) => {
     if (!e.target) return;
     if (e.target.id === "bobotAyam") omUpdateAyamTotal();
+    if (e.target.id === "potonganLain") omUpdatePotonganPreview();
     if (e.target.id === "uangMasuk") omUpdateUangPreview();
   });
 
@@ -1024,6 +1165,8 @@ window.AmyamStore = (function () {
     if (e.target.closest("#aiKeyBtn")) { promptAiKey(); return; }
     if (e.target.closest("#calcBtn")) { omCalculate(); return; }
     if (e.target.closest("#strukBtn")) { openStruk(); return; }
+    if (e.target.closest("#saveRwBtn")) { saveCurrentToRiwayat(e.target.closest("#saveRwBtn")); return; }
+    if (e.target.closest("#riwayatBtn")) { openRiwayat(); return; }
   });
 
   function showScreen(name) {

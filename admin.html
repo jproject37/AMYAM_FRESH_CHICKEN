@@ -163,8 +163,8 @@
   .om-info { font-size: 12px; color: #1f3a4d; background: #EAF4FF; border: 1px solid #CFE6FA; border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; line-height: 1.55; }
   .om-info b { color: #b9652a; }
   .om-field { margin-bottom: 14px; }
-  .om-field > label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 7px; }
-  .om-field > label span { font-weight: 500; color: var(--muted); font-size: 11px; }
+  .om-field > label { display: block; font-size: 16px; font-weight: 800; margin-bottom: 8px; color: #d35400; letter-spacing: .2px; }
+  .om-field > label span { font-weight: 500; color: var(--muted); font-size: 12px; letter-spacing: 0; }
   .om-acuan { display: flex; align-items: center; gap: 10px; background: var(--soft); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
   .om-acuan .val { flex: 1; font-size: 15px; font-weight: 700; }
   .om-acuan .val.empty { color: var(--muted); font-weight: 500; font-style: italic; }
@@ -173,9 +173,10 @@
   .om-editrow { display: flex; gap: 8px; }
   .om-editrow input { flex: 1; min-width: 0; font-family: inherit; font-size: 15px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
   .om-editrow .save { border: none; background: var(--green); color: #fff; font-family: inherit; font-size: 13px; font-weight: 700; padding: 0 16px; border-radius: 10px; cursor: pointer; min-height: 44px; white-space: nowrap; }
-  .om-input { width: 100%; font-family: inherit; font-size: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; box-sizing: border-box; }
-  .om-area { resize: vertical; min-height: 54px; line-height: 1.7; white-space: pre-wrap; }
-  .om-livetotal { font-size: 12px; font-weight: 700; color: #2c7a54; margin-top: 6px; min-height: 16px; }
+  .om-input { width: 100%; font-family: inherit; font-size: 23px; font-weight: 800; color: #0a7d3f; padding: 14px; border: 2px solid var(--border); border-radius: 10px; background: #fff; box-sizing: border-box; }
+  .om-input::placeholder { color: #b7c2bb; font-weight: 600; }
+  .om-area { resize: vertical; min-height: 64px; line-height: 1.55; white-space: pre-wrap; }
+  .om-livetotal { font-size: 15px; font-weight: 800; color: #12a454; margin-top: 8px; min-height: 20px; }
   .om-input:focus, .om-editrow input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
   .om-hr { border: none; border-top: 1px dashed var(--border); margin: 18px 0; }
   .om-calc { width: 100%; border: none; border-radius: 12px; padding: 14px; font-family: inherit; font-size: 15px; font-weight: 800; color: #fff; cursor: pointer; min-height: 50px; background: linear-gradient(160deg, var(--amber) 0%, #b9652a 100%); box-shadow: 0 6px 16px rgba(213,128,59,.28); }
@@ -230,6 +231,8 @@
   .struk-sep { border-top: 2px dashed #ddd; margin: 15px 0; }
   .struk-row { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; color: #444; }
   .struk-row b { color: #111; }
+  .struk-row.sub { font-size: 12px; color: #999; padding: 0 0 8px; margin-top: -2px; }
+  .struk-row.sub b { color: #666; font-weight: 700; }
   .struk-total { display: flex; justify-content: space-between; align-items: center; background: #e8f6ee; border-radius: 11px; padding: 13px 15px; font-size: 16px; font-weight: 800; color: #2c7a54; }
   .struk-time { font-size: 12px; color: #666; margin-top: 4px; line-height: 1.7; }
   .struk-foot { font-size: 13px; color: #333; margin-top: 14px; font-style: italic; }
@@ -710,7 +713,7 @@ window.AmyamStore = (function () {
       </div>
 
       <div class="om-field">
-        <label>Potongan Lain-lain (Rp) <span>(tiap belanja tekan Enter ↵ — contoh: sabun 20000)</span></label>
+        <label>Potongan Belanja (Rp) <span>(tiap belanja tekan Enter ↵ — contoh: sabun 20000)</span></label>
         <textarea class="om-input om-area" id="potonganLain" rows="3" enterkeyhint="enter" placeholder="sabun 20000&#10;cabe 50000"></textarea>
         <div class="om-livetotal" id="potonganLainPreview"></div>
       </div>
@@ -783,7 +786,7 @@ window.AmyamStore = (function () {
       potLainItems.forEach((it) => {
         html += `<div class="line om-potitem"><span>· ${esc(it.nama)}</span><b>− ${rupiah(it.nilai)}</b></div>`;
       });
-      html += `<div class="line"><span>Total potongan lain-lain</span><b>− ${rupiah(potLain)}</b></div>`;
+      html += `<div class="line"><span>Total potongan belanja</span><b>− ${rupiah(potLain)}</b></div>`;
     }
     if (uangMasuk > 0) {
       const selisih = uangMasuk - setoran;
@@ -793,7 +796,7 @@ window.AmyamStore = (function () {
     } else {
       html += `<div class="om-total ${setoran < 0 ? "minus" : ""}"><span>JUMLAH SETORAN</span><b>${rupiah(setoran)}</b></div>`;
     }
-    window.__omLast = { bAyam: bAyam, bJerohan: bJerohan, omset: setoran, potItems: potLainItems, potLain: potLain, uangMasuk: uangMasuk };
+    window.__omLast = { bAyam: bAyam, bJerohan: bJerohan, netAyam: netAyam, netJerohan: netJerohan, hSetor: hSetor, hJerohan: hJerohan, subAyam: subAyam, subJerohan: subJerohan, subtotal: subtotal, potWajib: POT_WAJIB, potAyamKg: POT_AYAM, potJerohanKg: POT_JEROHAN, omset: setoran, potItems: potLainItems, potLain: potLain, uangMasuk: uangMasuk };
     html += `<button class="om-struk" id="strukBtn">🧾 Cetak / Kirim Struk Setoran</button>`;
     html += `<button class="om-save-rw" id="saveRwBtn">💾 Simpan ke Riwayat</button>`;
     $("omResult").innerHTML = html;
@@ -842,7 +845,7 @@ window.AmyamStore = (function () {
       return '<div class="rw-item">' +
         '<div class="rw-head"><b>' + fmtFull(r.waktu) + '</b><button class="rw-del" data-del="' + r.id + '">🗑️</button></div>' +
         '<div class="rw-body">Ayam <b>' + r.bAyam + '</b> kg · Jerohan <b>' + r.bJerohan + '</b> kg' +
-        (r.potLain ? ' · Potongan lain-lain ' + rupiah(r.potLain) : '') + '</div>' +
+        (r.potLain ? ' · Potongan belanja ' + rupiah(r.potLain) : '') + '</div>' +
         pot +
         '<div class="rw-setoran">JUMLAH SETORAN: <b>' + rupiah(r.omset) + '</b></div>' +
       '</div>';
@@ -881,9 +884,12 @@ window.AmyamStore = (function () {
         '<div class="struk-brand">🐔 AMYAM FRESH CHICKEN</div>' +
         '<div class="struk-sub">STRUK SETORAN</div>' +
         '<div class="struk-sep"></div>' +
-        '<div class="struk-row"><span>Total Bobot Ayam</span><b>' + d.bAyam + ' Kg</b></div>' +
-        '<div class="struk-row"><span>Total Bobot Jerohan</span><b>' + d.bJerohan + ' Kg</b></div>' +
-        ((d.potItems && d.potItems.length) ? ('<div class="struk-sep"></div>' + d.potItems.map(function (it) { return '<div class="struk-row"><span>' + esc(it.nama) + '</span><b>− ' + rupiah(it.nilai) + '</b></div>'; }).join('') + '<div class="struk-row"><span><b>Total potongan lain-lain</b></span><b>− ' + rupiah(d.potLain) + '</b></div>') : '') +
+        (d.bAyam > 0 ? ('<div class="struk-row"><span>Bobot Ayam</span><b>' + d.bAyam + ' Kg</b></div>' + '<div class="struk-row sub"><span>(−' + d.potAyamKg + ' kg) ' + d.netAyam + ' kg × ' + rupiah(d.hSetor) + '</span><b>' + rupiah(d.subAyam) + '</b></div>') : '') +
+        (d.bJerohan > 0 ? ('<div class="struk-row"><span>Bobot Jerohan</span><b>' + d.bJerohan + ' Kg</b></div>' + '<div class="struk-row sub"><span>(−' + d.potJerohanKg + ' kg) ' + d.netJerohan + ' kg × ' + rupiah(d.hJerohan) + '</span><b>' + rupiah(d.subJerohan) + '</b></div>') : '') +
+        '<div class="struk-sep"></div>' +
+        '<div class="struk-row"><span>Subtotal</span><b>' + rupiah(d.subtotal) + '</b></div>' +
+        '<div class="struk-row"><span>Potongan wajib</span><b>− ' + rupiah(d.potWajib) + '</b></div>' +
+        ((d.potItems && d.potItems.length) ? (d.potItems.map(function (it) { return '<div class="struk-row"><span>· ' + esc(it.nama) + '</span><b>− ' + rupiah(it.nilai) + '</b></div>'; }).join('') + '<div class="struk-row"><span><b>Total potongan belanja</b></span><b>− ' + rupiah(d.potLain) + '</b></div>') : '') +
         '<div class="struk-sep"></div>' +
         '<div class="struk-total"><span>JUMLAH SETORAN</span><b>' + rupiah(d.omset) + '</b></div>' +
         '<div class="struk-sep"></div>' +
@@ -905,7 +911,30 @@ window.AmyamStore = (function () {
   function shareStruk(d, hari, tgl, jam) {
     const items = (d.potItems || []);
     const W = 620, s = 2;
-    let H = 484 + (items.length ? 62 + items.length * 30 : 0);
+    const ops = [];
+    let y = 120;
+    ops.push({ t: 'dash', y: y }); y += 4;
+    if (d.bAyam > 0) {
+      y += 40; ops.push({ t: 'row', label: 'Bobot Ayam', val: d.bAyam + ' Kg', y: y });
+      y += 26; ops.push({ t: 'row', label: '(−' + d.potAyamKg + ' kg) ' + d.netAyam + ' kg × ' + rupiah(d.hSetor), val: rupiah(d.subAyam), y: y, opt: { lf: '14px Arial', vf: '15px Arial', lc: '#999999', vc: '#444444', x: 56 } });
+    }
+    if (d.bJerohan > 0) {
+      y += 38; ops.push({ t: 'row', label: 'Bobot Jerohan', val: d.bJerohan + ' Kg', y: y });
+      y += 26; ops.push({ t: 'row', label: '(−' + d.potJerohanKg + ' kg) ' + d.netJerohan + ' kg × ' + rupiah(d.hJerohan), val: rupiah(d.subJerohan), y: y, opt: { lf: '14px Arial', vf: '15px Arial', lc: '#999999', vc: '#444444', x: 56 } });
+    }
+    y += 30; ops.push({ t: 'dash', y: y });
+    y += 36; ops.push({ t: 'row', label: 'Subtotal', val: rupiah(d.subtotal), y: y });
+    y += 34; ops.push({ t: 'row', label: 'Potongan wajib', val: '− ' + rupiah(d.potWajib), y: y, opt: { vc: '#aa2233' } });
+    items.forEach((it) => { y += 30; ops.push({ t: 'row', label: '· ' + it.nama, val: '− ' + rupiah(it.nilai), y: y, opt: { lf: '15px Arial', vf: '15px Arial', lc: '#777777', vc: '#aa2233', x: 56 } }); });
+    if (d.potLain > 0) { y += 32; ops.push({ t: 'row', label: 'Total potongan belanja', val: '− ' + rupiah(d.potLain), y: y, opt: { vc: '#aa2233' } }); }
+    y += 28; ops.push({ t: 'dash', y: y });
+    y += 24; ops.push({ t: 'box', y: y }); y += 68;
+    y += 28; ops.push({ t: 'dash', y: y });
+    y += 38; ops.push({ t: 'center', text: hari + ', ' + tgl, y: y, font: '16px Arial', color: '#555555' });
+    y += 26; ops.push({ t: 'center', text: 'Pukul ' + jam + ' WIB', y: y, font: '16px Arial', color: '#555555' });
+    y += 44; ops.push({ t: 'center', text: 'Terima kasih 🙏', y: y, font: 'italic 16px Arial', color: '#333333' });
+    y += 26;
+    const H = y;
     const cv = document.createElement('canvas'); cv.width = W * s; cv.height = H * s;
     const c = cv.getContext('2d'); c.scale(s, s);
     c.fillStyle = '#ffffff'; c.fillRect(0, 0, W, H);
@@ -913,24 +942,14 @@ window.AmyamStore = (function () {
     c.textAlign = 'center'; c.textBaseline = 'alphabetic';
     c.fillStyle = '#c0620f'; c.font = 'bold 27px Arial'; c.fillText('🐔 AMYAM FRESH CHICKEN', W / 2, 60);
     c.fillStyle = '#999999'; c.font = '14px Arial'; c.fillText('S T R U K   S E T O R A N', W / 2, 90);
-    const dash = (y) => { c.strokeStyle = '#cccccc'; c.lineWidth = 1.5; c.setLineDash([7, 6]); c.beginPath(); c.moveTo(44, y); c.lineTo(W - 44, y); c.stroke(); c.setLineDash([]); };
-    const row = (label, val, y, opt) => { opt = opt || {}; c.textAlign = 'left'; c.fillStyle = opt.lc || '#666666'; c.font = opt.lf || '19px Arial'; c.fillText(label, opt.x || 48, y); c.textAlign = 'right'; c.fillStyle = opt.vc || '#222222'; c.font = opt.vf || 'bold 21px Arial'; c.fillText(val, W - 48, y); };
-    let y = 120;
-    dash(y); y += 4;
-    y += 40; row('Total Bobot Ayam', d.bAyam + ' Kg', y);
-    y += 40; row('Total Bobot Jerohan', d.bJerohan + ' Kg', y);
-    y += 28; dash(y);
-    items.forEach((it) => { y += 30; row(it.nama, '− ' + rupiah(it.nilai), y, { lf: '16px Arial', vf: '16px Arial', lc: '#777777', vc: '#aa2233', x: 56 }); });
-    if (items.length) { y += 34; row('Total potongan lain-lain', '− ' + rupiah(d.potLain), y, { vc: '#aa2233' }); y += 28; dash(y); }
-    y += 24; c.fillStyle = '#e8f6ee'; c.fillRect(44, y, W - 88, 68);
-    const boxY = y + 42;
-    c.textAlign = 'left'; c.fillStyle = '#2c7a54'; c.font = 'bold 20px Arial'; c.fillText('JUMLAH SETORAN', 62, boxY);
-    c.textAlign = 'right'; c.font = 'bold 24px Arial'; c.fillText(rupiah(d.omset), W - 62, boxY);
-    y += 68;
-    y += 28; dash(y);
-    y += 38; c.textAlign = 'center'; c.fillStyle = '#555555'; c.font = '16px Arial'; c.fillText(hari + ', ' + tgl, W / 2, y);
-    y += 26; c.fillText('Pukul ' + jam + ' WIB', W / 2, y);
-    y += 44; c.fillStyle = '#333333'; c.font = 'italic 16px Arial'; c.fillText('Terima kasih 🙏', W / 2, y);
+    const dash = (yy) => { c.strokeStyle = '#cccccc'; c.lineWidth = 1.5; c.setLineDash([7, 6]); c.beginPath(); c.moveTo(44, yy); c.lineTo(W - 44, yy); c.stroke(); c.setLineDash([]); };
+    const row = (label, val, yy, opt) => { opt = opt || {}; c.textAlign = 'left'; c.fillStyle = opt.lc || '#666666'; c.font = opt.lf || '18px Arial'; c.fillText(label, opt.x || 48, yy); c.textAlign = 'right'; c.fillStyle = opt.vc || '#222222'; c.font = opt.vf || 'bold 20px Arial'; c.fillText(val, W - 48, yy); };
+    ops.forEach((o) => {
+      if (o.t === 'dash') dash(o.y);
+      else if (o.t === 'row') row(o.label, o.val, o.y, o.opt);
+      else if (o.t === 'center') { c.textAlign = 'center'; c.fillStyle = o.color; c.font = o.font; c.fillText(o.text, W / 2, o.y); }
+      else if (o.t === 'box') { c.fillStyle = '#e8f6ee'; c.fillRect(44, o.y, W - 88, 68); const boxY = o.y + 42; c.textAlign = 'left'; c.fillStyle = '#2c7a54'; c.font = 'bold 20px Arial'; c.fillText('JUMLAH SETORAN', 62, boxY); c.textAlign = 'right'; c.font = 'bold 24px Arial'; c.fillText(rupiah(d.omset), W - 62, boxY); }
+    });
     cv.toBlob(async (blob) => {
       const file = new File([blob], 'struk-setoran-amyam.png', { type: 'image/png' });
       try {
@@ -995,7 +1014,7 @@ window.AmyamStore = (function () {
     if (!el) return;
     const items = omParsePotongan($("potonganLain").value);
     const tot = omTotalPotongan(items);
-    el.textContent = items.length ? `∑ Potongan lain-lain: ${rupiah(tot)}  ·  ${items.length} item` : "";
+    el.textContent = items.length ? `∑ Potongan belanja: ${rupiah(tot)}  ·  ${items.length} item` : "";
   }
 
   // Update total & preview secara live saat mengetik

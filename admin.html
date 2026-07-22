@@ -202,9 +202,40 @@
   .om-save-rw:disabled { background: #e8f6ee; color: #2c7a54; }
   .om-result .om-potitem span { color: #888; padding-left: 10px; }
   .om-result .om-potitem b { color: #c0392b; font-weight: 700; }
-  .om-hist-row { margin: 4px 0 12px; }
-  .om-hist-btn { width: 100%; border: 1px solid #e6ddcf; background: #fff8ef; color: #b35d0a; font-family: inherit; font-size: 13px; font-weight: 700; padding: 10px; border-radius: 10px; cursor: pointer; }
+  .om-hist-row { margin: 4px 0 12px; display: flex; gap: 8px; }
+  .om-hist-btn { flex: 1; border: 1px solid #e6ddcf; background: #fff8ef; color: #b35d0a; font-family: inherit; font-size: 13px; font-weight: 700; padding: 10px; border-radius: 10px; cursor: pointer; }
+  .om-hist-btn.buku { background: #fff0f0; border-color: #f0d0d0; color: #c0392b; }
   .om-hist-btn:active { opacity: .8; }
+  .om-note-box { margin-top: 14px; border: 1px dashed #d9b48a; background: #fffdf7; border-radius: 12px; padding: 12px 14px; }
+  .om-note-title { font-size: 13px; font-weight: 800; color: #b35d0a; margin-bottom: 8px; }
+  .om-note-title span { font-size: 10px; font-weight: 600; color: #b0895f; margin-left: 4px; }
+  .om-note-box .line { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; border-bottom: 1px dashed #eadfce; }
+  .om-note-box .line:last-child { border-bottom: none; }
+  .om-note-box .line .plus { color: #2c7a54; }
+  .om-note-box .line .minus { color: #c0392b; }
+  .om-note-box .line.sub span { color: #999; padding-left: 12px; font-size: 13px; }
+  .om-note-risk { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 11px 13px; border-radius: 10px; font-size: 15px; font-weight: 800; gap: 10px; }
+  .om-note-risk span { line-height: 1.35; }
+  .om-note-risk.aman { background: #e8f6ee; color: #2c7a54; }
+  .om-note-risk.rugi { background: #FCE9E7; color: #c0392b; }
+  .om-catat-hutang { width: 100%; margin-top: 10px; padding: 12px; border: 0; border-radius: 12px; background: #fff0f0; color: #c0392b; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .om-catat-hutang:active { opacity: .85; }
+  .om-catat-hutang:disabled { background: #e8f6ee; color: #2c7a54; }
+  .bh-total { background: #fff0f0; border: 1px solid #f0d0d0; border-radius: 12px; padding: 12px 14px; font-size: 15px; font-weight: 800; color: #c0392b; display: flex; justify-content: space-between; margin-bottom: 14px; }
+  .bh-add { display: flex; gap: 8px; margin-bottom: 14px; }
+  .bh-add input { font-family: inherit; font-size: 14px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; }
+  .bh-add input.nama { flex: 1; min-width: 0; }
+  .bh-add input.nom { width: 108px; }
+  .bh-add button { border: 0; background: var(--green); color: #fff; font-family: inherit; font-weight: 700; padding: 0 14px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
+  .bh-item { border: 1px solid #eee; border-radius: 12px; padding: 10px 12px; background: #fafafa; display: flex; align-items: center; gap: 10px; }
+  .bh-item.lunas { opacity: .6; }
+  .bh-info { flex: 1; min-width: 0; }
+  .bh-nama { font-size: 14px; font-weight: 700; color: #333; }
+  .bh-meta { font-size: 11px; color: #999; margin-top: 2px; }
+  .bh-nom { font-size: 14px; font-weight: 800; color: #c0392b; white-space: nowrap; }
+  .bh-item.lunas .bh-nom { color: #2c7a54; }
+  .bh-act { display: flex; gap: 2px; }
+  .bh-act button { border: 0; background: transparent; font-size: 17px; cursor: pointer; padding: 2px; }
   .rw-card { background: #fff; width: 100%; max-width: 420px; max-height: 82vh; overflow-y: auto; border-radius: 16px; padding: 20px; box-shadow: 0 12px 44px rgba(0,0,0,.32); }
   .rw-title { font-size: 16px; font-weight: 800; color: #b35d0a; margin-bottom: 14px; }
   .rw-title span { display: block; font-size: 11px; font-weight: 500; color: #999; margin-top: 2px; }
@@ -679,7 +710,7 @@ window.AmyamStore = (function () {
 
       <div class="om-ai-row"><span class="om-ai-tag" id="aiTag"></span><button class="om-ai-btn" type="button" id="aiKeyBtn">🔑 Scan AI</button></div>
 
-      <div class="om-hist-row"><button class="om-hist-btn" type="button" id="riwayatBtn">📜 Riwayat Setoran (7 hari)</button></div>
+      <div class="om-hist-row"><button class="om-hist-btn" type="button" id="riwayatBtn">📜 Riwayat (7 hari)</button><button class="om-hist-btn buku" type="button" id="bukuHutangBtn">📕 Buku Hutang</button></div>
 
       <div class="om-field">
         <label>Harga Setor <span>(harga acuan tetap \u00b7 per kg)</span></label>
@@ -719,9 +750,21 @@ window.AmyamStore = (function () {
       </div>
 
       <div class="om-field">
-        <label>Uang Masuk (Rp) <span>(uang yang diterima)</span></label>
+        <label>Uang Masuk (Rp) <span>(uang tunai yang diterima)</span></label>
         <input class="om-input" type="text" inputmode="numeric" id="uangMasuk" placeholder="contoh: 9.000.000" />
         <div class="om-livetotal" id="uangMasukPreview"></div>
+      </div>
+
+      <div class="om-field">
+        <label>Hutang Pelanggan Hari Ini (Rp) <span>(tiap orang tekan Enter ↵ — contoh: budi 300000)</span></label>
+        <textarea class="om-input om-area" id="hutangHari" rows="2" enterkeyhint="enter" placeholder="budi 300000&#10;sari 200000"></textarea>
+        <div class="om-livetotal" id="hutangHariPreview"></div>
+      </div>
+
+      <div class="om-field">
+        <label>Sisa Ayam Belum Laku (Rp) <span>(perkiraan nilai stok tersisa)</span></label>
+        <input class="om-input" type="text" inputmode="numeric" id="sisaAyam" placeholder="contoh: 300.000" />
+        <div class="om-livetotal" id="sisaAyamPreview"></div>
       </div>
 
       <button class="om-calc" id="calcBtn">\ud83e\uddee Kalkulasi</button>
@@ -758,6 +801,9 @@ window.AmyamStore = (function () {
     const uangMasuk = omUang($("uangMasuk").value);
     const potLainItems = omParsePotongan($("potonganLain").value);
     const potLain = omTotalPotongan(potLainItems);
+    const hutangItems = omParsePotongan($("hutangHari").value);
+    const hutangHari = omTotalPotongan(hutangItems);
+    const sisaAyam = omUang($("sisaAyam").value);
     const POT_AYAM = 7;        // kg, potongan wajib bobot ayam
     const POT_JEROHAN = 5;     // kg, potongan wajib bobot jerohan
     const POT_WAJIB = 255000;  // Rp, potongan wajib
@@ -796,7 +842,29 @@ window.AmyamStore = (function () {
     } else {
       html += `<div class="om-total ${setoran < 0 ? "minus" : ""}"><span>JUMLAH SETORAN</span><b>${rupiah(setoran)}</b></div>`;
     }
-    window.__omLast = { bAyam: bAyam, bJerohan: bJerohan, netAyam: netAyam, netJerohan: netJerohan, hSetor: hSetor, hJerohan: hJerohan, subAyam: subAyam, subJerohan: subJerohan, subtotal: subtotal, potWajib: POT_WAJIB, potAyamKg: POT_AYAM, potJerohanKg: POT_JEROHAN, omset: setoran, potItems: potLainItems, potLain: potLain, uangMasuk: uangMasuk };
+    // ==== Catatan pribadi (TIDAK masuk struk): talangan / hutang / sisa ayam / risiko ====
+    if (uangMasuk > 0 || hutangHari > 0 || sisaAyam > 0) {
+      const kekurangan = setoran - uangMasuk;
+      const tertahan = hutangHari + sisaAyam;
+      const risiko = kekurangan - tertahan;
+      let n = '<div class="om-note-box">';
+      n += '<div class="om-note-title">📒 Catatan Pribadi <span>(tidak tampil di struk)</span></div>';
+      n += `<div class="line"><span>Setoran wajib (harus disetor)</span><b>${rupiah(setoran)}</b></div>`;
+      n += `<div class="line"><span>Uang tunai diterima</span><b class="plus">${rupiah(uangMasuk)}</b></div>`;
+      if (kekurangan > 0) {
+        n += `<div class="line"><span>Kekurangan (kamu talangi dulu)</span><b class="minus">− ${rupiah(kekurangan)}</b></div>`;
+        if (hutangHari > 0) n += `<div class="line sub"><span>↳ tertahan di hutang</span><b class="plus">+ ${rupiah(hutangHari)}</b></div>`;
+        if (sisaAyam > 0) n += `<div class="line sub"><span>↳ tertahan di sisa ayam</span><b class="plus">+ ${rupiah(sisaAyam)}</b></div>`;
+        const aman = risiko <= 0;
+        n += `<div class="om-note-risk ${aman ? "aman" : "rugi"}"><span>${aman ? "✅ Aman — kekurangan ketutup hutang &amp; sisa ayam" : "⚠️ Nombok bersih hari ini"}</span><b>${aman ? rupiah(0) : "− " + rupiah(risiko)}</b></div>`;
+      } else {
+        n += `<div class="om-note-risk aman"><span>✅ Uang lebih dari setoran</span><b>+ ${rupiah(-kekurangan)}</b></div>`;
+      }
+      if (hutangItems.length) n += '<button class="om-catat-hutang" id="catatHutangBtn">➕ Catat hutang ini ke Buku Hutang</button>';
+      n += '</div>';
+      html += n;
+    }
+    window.__omLast = { bAyam: bAyam, bJerohan: bJerohan, netAyam: netAyam, netJerohan: netJerohan, hSetor: hSetor, hJerohan: hJerohan, subAyam: subAyam, subJerohan: subJerohan, subtotal: subtotal, potWajib: POT_WAJIB, potAyamKg: POT_AYAM, potJerohanKg: POT_JEROHAN, omset: setoran, potItems: potLainItems, potLain: potLain, uangMasuk: uangMasuk, hutangItems: hutangItems, hutangHari: hutangHari, sisaAyam: sisaAyam };
     html += `<button class="om-struk" id="strukBtn">🧾 Cetak / Kirim Struk Setoran</button>`;
     html += `<button class="om-save-rw" id="saveRwBtn">💾 Simpan ke Riwayat</button>`;
     $("omResult").innerHTML = html;
@@ -867,6 +935,93 @@ window.AmyamStore = (function () {
       const del = e.target.closest("[data-del]");
       if (del) { if (confirm("Hapus riwayat ini?")) riwayatDelete(del.dataset.del); return; }
       if (e.target.closest("#rwCloseBtn")) ov.remove();
+    });
+  }
+
+  // ====== Buku Hutang (localStorage; hutang lunas auto-hapus > 30 hari, belum lunas kekal) ======
+  const BH_KEY = "amyam_hutang";
+  const BH_LUNAS_MAX_MS = 30 * 24 * 60 * 60 * 1000;
+  function hutangLoad() {
+    let arr = [];
+    try { arr = JSON.parse(localStorage.getItem(BH_KEY) || "[]"); } catch (e) { arr = []; }
+    if (!Array.isArray(arr)) arr = [];
+    const now = Date.now();
+    const kept = arr.filter((h) => h && !(h.lunas && h.lunasTgl && (now - new Date(h.lunasTgl).getTime()) > BH_LUNAS_MAX_MS));
+    if (kept.length !== arr.length) localStorage.setItem(BH_KEY, JSON.stringify(kept));
+    return kept;
+  }
+  function hutangStore(arr) { localStorage.setItem(BH_KEY, JSON.stringify(arr)); }
+  function hutangAdd(nama, nilai) {
+    if (!nama || !(nilai > 0)) return false;
+    const arr = hutangLoad();
+    arr.unshift({ id: "ht_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7), nama: nama, nilai: nilai, tgl: new Date().toISOString(), lunas: false, lunasTgl: null });
+    hutangStore(arr);
+    return true;
+  }
+  function hutangToggleLunas(id) {
+    const arr = hutangLoad();
+    const h = arr.find((x) => x.id === id);
+    if (h) { h.lunas = !h.lunas; h.lunasTgl = h.lunas ? new Date().toISOString() : null; hutangStore(arr); }
+    renderHutangList();
+  }
+  function hutangDelete(id) {
+    hutangStore(hutangLoad().filter((h) => h.id !== id));
+    renderHutangList();
+  }
+  function catatHutangHariIni(btn) {
+    const d = window.__omLast;
+    const items = (d && d.hutangItems) || [];
+    if (!items.length) { alert("Tidak ada hutang untuk dicatat."); return; }
+    items.forEach((it) => hutangAdd(it.nama, it.nilai));
+    if (btn) { btn.textContent = "✅ " + items.length + " hutang tercatat ke Buku"; btn.disabled = true; }
+  }
+  function renderHutangList() {
+    const box = document.getElementById("bhList");
+    if (!box) return;
+    const arr = hutangLoad();
+    const totalBox = document.getElementById("bhTotal");
+    const totalBelum = arr.filter((h) => !h.lunas).reduce((a, b) => a + (Number(b.nilai) || 0), 0);
+    if (totalBox) totalBox.innerHTML = '<span>Total hutang berjalan</span><b>' + rupiah(totalBelum) + '</b>';
+    if (!arr.length) { box.innerHTML = '<div class="rw-empty">Belum ada catatan hutang.</div>'; return; }
+    box.innerHTML = arr.map((h) => {
+      const namaH = h.lunas ? '<s>' + esc(h.nama) + '</s>' : esc(h.nama);
+      const tglH = fmtFull(h.tgl) + (h.lunas && h.lunasTgl ? ' · lunas ' + fmtFull(h.lunasTgl) : '');
+      return '<div class="bh-item ' + (h.lunas ? 'lunas' : '') + '">' +
+        '<div class="bh-info"><div class="bh-nama">' + namaH + '</div><div class="bh-meta">' + tglH + '</div></div>' +
+        '<div class="bh-nom">' + rupiah(h.nilai) + '</div>' +
+        '<div class="bh-act"><button data-lunas="' + h.id + '" title="Tandai lunas">' + (h.lunas ? '↩️' : '✅') + '</button><button data-bhdel="' + h.id + '" title="Hapus">🗑️</button></div>' +
+      '</div>';
+    }).join('');
+  }
+  function openBukuHutang() {
+    const ov = document.createElement("div");
+    ov.className = "struk-ov"; ov.id = "bhOv";
+    ov.innerHTML =
+      '<div class="rw-card">' +
+        '<div class="rw-title">📕 Buku Hutang <span>(hutang lunas terhapus otomatis setelah 30 hari)</span></div>' +
+        '<div class="bh-total" id="bhTotal"></div>' +
+        '<div class="bh-add"><input class="nama" id="bhNama" placeholder="Nama pelanggan" /><input class="nom" id="bhNom" inputmode="numeric" placeholder="Nominal" /><button id="bhAddBtn">Tambah</button></div>' +
+        '<div class="rw-list" id="bhList"></div>' +
+        '<button class="struk-btn close" id="bhCloseBtn">✕ Tutup</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    renderHutangList();
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) { ov.remove(); return; }
+      const ln = e.target.closest("[data-lunas]");
+      if (ln) { hutangToggleLunas(ln.dataset.lunas); return; }
+      const dl = e.target.closest("[data-bhdel]");
+      if (dl) { if (confirm("Hapus catatan hutang ini?")) hutangDelete(dl.dataset.bhdel); return; }
+      if (e.target.closest("#bhAddBtn")) {
+        const nama = ($("bhNama").value || "").trim();
+        const nom = omUang($("bhNom").value);
+        if (!nama || !(nom > 0)) { alert("Isi nama & nominal hutang dulu."); return; }
+        hutangAdd(nama, nom);
+        $("bhNama").value = ""; $("bhNom").value = "";
+        renderHutangList();
+        return;
+      }
+      if (e.target.closest("#bhCloseBtn")) ov.remove();
     });
   }
 
@@ -989,6 +1144,19 @@ window.AmyamStore = (function () {
     const v = omUang($("uangMasuk").value);
     el.textContent = v ? `= ${rupiah(v)}` : "";
   }
+  function omUpdateHutangPreview() {
+    const el = $("hutangHariPreview");
+    if (!el) return;
+    const items = omParsePotongan($("hutangHari").value);
+    const tot = omTotalPotongan(items);
+    el.textContent = items.length ? `∑ Hutang hari ini: ${rupiah(tot)}  ·  ${items.length} orang` : "";
+  }
+  function omUpdateSisaPreview() {
+    const el = $("sisaAyamPreview");
+    if (!el) return;
+    const v = omUang($("sisaAyam").value);
+    el.textContent = v ? `= ${rupiah(v)}` : "";
+  }
 
   // Parsing potongan lain-lain: tiap baris "nama nominal" -> {nama, nilai}
   function omParsePotongan(str) {
@@ -1023,6 +1191,8 @@ window.AmyamStore = (function () {
     if (e.target.id === "bobotAyam") omUpdateAyamTotal();
     if (e.target.id === "potonganLain") omUpdatePotonganPreview();
     if (e.target.id === "uangMasuk") omUpdateUangPreview();
+    if (e.target.id === "hutangHari") omUpdateHutangPreview();
+    if (e.target.id === "sisaAyam") omUpdateSisaPreview();
   });
 
   // ====== Scan AI (Google Gemini) — akurat baca layar timbangan digital ======
@@ -1186,6 +1356,8 @@ window.AmyamStore = (function () {
     if (e.target.closest("#strukBtn")) { openStruk(); return; }
     if (e.target.closest("#saveRwBtn")) { saveCurrentToRiwayat(e.target.closest("#saveRwBtn")); return; }
     if (e.target.closest("#riwayatBtn")) { openRiwayat(); return; }
+    if (e.target.closest("#bukuHutangBtn")) { openBukuHutang(); return; }
+    if (e.target.closest("#catatHutangBtn")) { catatHutangHariIni(e.target.closest("#catatHutangBtn")); return; }
   });
 
   function showScreen(name) {

@@ -221,6 +221,9 @@
   .om-catat-hutang { width: 100%; margin-top: 10px; padding: 12px; border: 0; border-radius: 12px; background: #fff0f0; color: #c0392b; font-size: 14px; font-weight: 700; cursor: pointer; }
   .om-catat-hutang:active { opacity: .85; }
   .om-catat-hutang:disabled { background: #e8f6ee; color: #2c7a54; }
+  .om-terapkan { width: 100%; margin-top: 8px; padding: 12px; border: 0; border-radius: 12px; background: #e8f6ee; color: #2c7a54; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .om-terapkan:active { opacity: .85; }
+  .om-terapkan:disabled { background: #ddd; color: #888; }
   .bh-total { background: #fff0f0; border: 1px solid #f0d0d0; border-radius: 12px; padding: 12px 14px; font-size: 15px; font-weight: 800; color: #c0392b; display: flex; justify-content: space-between; margin-bottom: 14px; }
   .bh-add { display: flex; gap: 8px; margin-bottom: 14px; }
   .bh-add input { font-family: inherit; font-size: 14px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; }
@@ -756,7 +759,13 @@ window.AmyamStore = (function () {
       </div>
 
       <div class="om-field">
-        <label>Hutang Pelanggan Hari Ini (Rp) <span>(tiap orang tekan Enter ↵ — contoh: budi 300000)</span></label>
+        <label>Bayaran Hutang Masuk (Rp) <span>(bayaran dari pelanggan lama — tiap orang tekan Enter ↵ — contoh: doni 50000)</span></label>
+        <textarea class="om-input om-area" id="bayaranHari" rows="2" enterkeyhint="enter" placeholder="doni 50000&#10;sari 100000"></textarea>
+        <div class="om-livetotal" id="bayaranHariPreview"></div>
+      </div>
+
+      <div class="om-field">
+        <label>Hutang Pelanggan Baru Hari Ini (Rp) <span>(pelanggan yg belum bayar — tiap orang tekan Enter ↵)</span></label>
         <textarea class="om-input om-area" id="hutangHari" rows="2" enterkeyhint="enter" placeholder="budi 300000&#10;sari 200000"></textarea>
         <div class="om-livetotal" id="hutangHariPreview"></div>
       </div>
@@ -804,6 +813,9 @@ window.AmyamStore = (function () {
     const hutangItems = omParsePotongan($("hutangHari").value);
     const hutangHari = omTotalPotongan(hutangItems);
     const sisaAyam = omUang($("sisaAyam").value);
+    const bayaranItems = omParsePotongan($("bayaranHari").value);
+    const totalBayaran = omTotalPotongan(bayaranItems);
+    const uangEfektif = uangMasuk + totalBayaran;
     const POT_AYAM = 7;        // kg, potongan wajib bobot ayam
     const POT_JEROHAN = 5;     // kg, potongan wajib bobot jerohan
     const POT_WAJIB = 255000;  // Rp, potongan wajib
@@ -843,28 +855,36 @@ window.AmyamStore = (function () {
       html += `<div class="om-total ${setoran < 0 ? "minus" : ""}"><span>JUMLAH SETORAN</span><b>${rupiah(setoran)}</b></div>`;
     }
     // ==== Catatan pribadi (TIDAK masuk struk): talangan / hutang / sisa ayam / risiko ====
-    if (uangMasuk > 0 || hutangHari > 0 || sisaAyam > 0) {
-      const kekurangan = setoran - uangMasuk;
+    if (uangEfektif > 0 || hutangHari > 0 || sisaAyam > 0) {
+      const kekurangan = setoran - uangEfektif;
       const tertahan = hutangHari + sisaAyam;
       const risiko = kekurangan - tertahan;
       let n = '<div class="om-note-box">';
       n += '<div class="om-note-title">📒 Catatan Pribadi <span>(tidak tampil di struk)</span></div>';
       n += `<div class="line"><span>Setoran wajib (harus disetor)</span><b>${rupiah(setoran)}</b></div>`;
-      n += `<div class="line"><span>Uang tunai diterima</span><b class="plus">${rupiah(uangMasuk)}</b></div>`;
-      if (kekurangan > 0) {
-        n += `<div class="line"><span>Kekurangan (kamu talangi dulu)</span><b class="minus">− ${rupiah(kekurangan)}</b></div>`;
-        if (hutangHari > 0) n += `<div class="line sub"><span>↳ tertahan di hutang</span><b class="plus">+ ${rupiah(hutangHari)}</b></div>`;
-        if (sisaAyam > 0) n += `<div class="line sub"><span>↳ tertahan di sisa ayam</span><b class="plus">+ ${rupiah(sisaAyam)}</b></div>`;
-        const aman = risiko <= 0;
-        n += `<div class="om-note-risk ${aman ? "aman" : "rugi"}"><span>${aman ? "✅ Aman — kekurangan ketutup hutang &amp; sisa ayam" : "⚠️ Nombok bersih hari ini"}</span><b>${aman ? rupiah(0) : "− " + rupiah(risiko)}</b></div>`;
-      } else {
-        n += `<div class="om-note-risk aman"><span>✅ Uang lebih dari setoran</span><b>+ ${rupiah(-kekurangan)}</b></div>`;
+      n += `<div class="line"><span>Uang tunai dari penjualan</span><b class="plus">${rupiah(uangMasuk)}</b></div>`;
+      if (totalBayaran > 0) {
+        bayaranItems.forEach((it) => {
+          n += `<div class="line sub"><span>\u21b3 bayar: ${esc(it.nama)}</span><b class="plus">+ ${rupiah(it.nilai)}</b></div>`;
+        });
+        n += `<div class="line"><span>Bayaran hutang masuk hari ini</span><b class="plus">+ ${rupiah(totalBayaran)}</b></div>`;
+        n += `<div class="line"><span><b>Total uang efektif</b></span><b>${rupiah(uangEfektif)}</b></div>`;
       }
-      if (hutangItems.length) n += '<button class="om-catat-hutang" id="catatHutangBtn">➕ Catat hutang ini ke Buku Hutang</button>';
+      if (kekurangan > 0) {
+        n += `<div class="line"><span>Kekurangan (kamu talangi dulu)</span><b class="minus">\u2212 ${rupiah(kekurangan)}</b></div>`;
+        if (hutangHari > 0) n += `<div class="line sub"><span>\u21b3 tertahan di hutang baru</span><b class="plus">+ ${rupiah(hutangHari)}</b></div>`;
+        if (sisaAyam > 0) n += `<div class="line sub"><span>\u21b3 tertahan di sisa ayam</span><b class="plus">+ ${rupiah(sisaAyam)}</b></div>`;
+        const aman = risiko <= 0;
+        n += `<div class="om-note-risk ${aman ? "aman" : "rugi"}"><span>${aman ? "\u2705 Aman \u2014 kekurangan ketutup hutang &amp; sisa ayam" : "\u26a0\ufe0f Nombok bersih hari ini"}</span><b>${aman ? rupiah(0) : "\u2212 " + rupiah(risiko)}</b></div>`;
+      } else {
+        n += `<div class="om-note-risk aman"><span>\u2705 Uang lebih dari setoran</span><b>+ ${rupiah(-kekurangan)}</b></div>`;
+      }
+      if (bayaranItems.length) n += '<button class="om-terapkan" id="terapBayaranBtn">\ud83d\udcd7 Terapkan bayaran ke Buku Hutang</button>';
+      if (hutangItems.length) n += '<button class="om-catat-hutang" id="catatHutangBtn">\u2795 Catat hutang baru ke Buku Hutang</button>';
       n += '</div>';
       html += n;
     }
-    window.__omLast = { bAyam: bAyam, bJerohan: bJerohan, netAyam: netAyam, netJerohan: netJerohan, hSetor: hSetor, hJerohan: hJerohan, subAyam: subAyam, subJerohan: subJerohan, subtotal: subtotal, potWajib: POT_WAJIB, potAyamKg: POT_AYAM, potJerohanKg: POT_JEROHAN, omset: setoran, potItems: potLainItems, potLain: potLain, uangMasuk: uangMasuk, hutangItems: hutangItems, hutangHari: hutangHari, sisaAyam: sisaAyam };
+    window.__omLast = { bAyam: bAyam, bJerohan: bJerohan, netAyam: netAyam, netJerohan: netJerohan, hSetor: hSetor, hJerohan: hJerohan, subAyam: subAyam, subJerohan: subJerohan, subtotal: subtotal, potWajib: POT_WAJIB, potAyamKg: POT_AYAM, potJerohanKg: POT_JEROHAN, omset: setoran, potItems: potLainItems, potLain: potLain, uangMasuk: uangMasuk, hutangItems: hutangItems, hutangHari: hutangHari, sisaAyam: sisaAyam, bayaranItems: bayaranItems, totalBayaran: totalBayaran, uangEfektif: uangEfektif };
     html += `<button class="om-struk" id="strukBtn">🧾 Cetak / Kirim Struk Setoran</button>`;
     html += `<button class="om-save-rw" id="saveRwBtn">💾 Simpan ke Riwayat</button>`;
     $("omResult").innerHTML = html;
@@ -968,6 +988,34 @@ window.AmyamStore = (function () {
     hutangStore(hutangLoad().filter((h) => h.id !== id));
     renderHutangList();
   }
+  function terapkanBayaranKeBuku(btn) {
+    const d = window.__omLast;
+    const items = (d && d.bayaranItems) || [];
+    if (!items.length) { alert("Tidak ada bayaran hutang untuk diterapkan."); return; }
+    const arr = hutangLoad();
+    const msgs = [];
+    for (const pay of items) {
+      const nameLower = pay.nama.toLowerCase().trim();
+      const matches = arr.filter((h) => !h.lunas && h.nama.toLowerCase().trim() === nameLower)
+                         .sort((a, b) => new Date(a.tgl) - new Date(b.tgl));
+      if (!matches.length) { msgs.push("\u26a0\ufe0f " + pay.nama + ": tidak ditemukan di Buku Hutang"); continue; }
+      let rem = pay.nilai;
+      for (const h of matches) {
+        if (rem <= 0) break;
+        const idx = arr.indexOf(h);
+        const deduct = Math.min(rem, arr[idx].nilai);
+        arr[idx].nilai -= deduct;
+        rem -= deduct;
+        if (arr[idx].nilai <= 0) { arr[idx].nilai = 0; arr[idx].lunas = true; arr[idx].lunasTgl = new Date().toISOString(); }
+      }
+      const done = pay.nilai - rem;
+      msgs.push("\u2705 " + pay.nama + ": \u2212" + rupiah(done) + (rem > 0 ? " (sisa " + rupiah(rem) + " tidak ada hutang)" : ""));
+    }
+    hutangStore(arr);
+    alert("Hasil update Buku Hutang:\n" + msgs.join("\n"));
+    if (btn) { btn.textContent = "\u2705 Diterapkan ke Buku Hutang"; btn.disabled = true; }
+  }
+
   function catatHutangHariIni(btn) {
     const d = window.__omLast;
     const items = (d && d.hutangItems) || [];
@@ -1157,6 +1205,13 @@ window.AmyamStore = (function () {
     const v = omUang($("sisaAyam").value);
     el.textContent = v ? `= ${rupiah(v)}` : "";
   }
+  function omUpdateBayaranPreview() {
+    const el = $("bayaranHariPreview");
+    if (!el) return;
+    const items = omParsePotongan($("bayaranHari").value);
+    const tot = omTotalPotongan(items);
+    el.textContent = items.length ? `\u2211 Bayaran masuk: ${rupiah(tot)}  \u00b7  ${items.length} orang` : "";
+  }
 
   // Parsing potongan lain-lain: tiap baris "nama nominal" -> {nama, nilai}
   function omParsePotongan(str) {
@@ -1193,6 +1248,7 @@ window.AmyamStore = (function () {
     if (e.target.id === "uangMasuk") omUpdateUangPreview();
     if (e.target.id === "hutangHari") omUpdateHutangPreview();
     if (e.target.id === "sisaAyam") omUpdateSisaPreview();
+    if (e.target.id === "bayaranHari") omUpdateBayaranPreview();
   });
 
   // ====== Scan AI (Google Gemini) — akurat baca layar timbangan digital ======
@@ -1356,6 +1412,7 @@ window.AmyamStore = (function () {
     if (e.target.closest("#strukBtn")) { openStruk(); return; }
     if (e.target.closest("#saveRwBtn")) { saveCurrentToRiwayat(e.target.closest("#saveRwBtn")); return; }
     if (e.target.closest("#riwayatBtn")) { openRiwayat(); return; }
+    if (e.target.closest("#terapBayaranBtn")) { terapkanBayaranKeBuku(e.target.closest("#terapBayaranBtn")); return; }
     if (e.target.closest("#bukuHutangBtn")) { openBukuHutang(); return; }
     if (e.target.closest("#catatHutangBtn")) { catatHutangHariIni(e.target.closest("#catatHutangBtn")); return; }
   });

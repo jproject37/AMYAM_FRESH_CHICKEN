@@ -313,9 +313,6 @@
     cursor: pointer; min-height: 48px;
   }
   /* ====== Kalkulator Risiko Trading ====== */
-  .trade-fab { position: fixed; right: 12px; bottom: 12px; width: 44px; height: 44px; border-radius: 50%; background: #c0392b; color: #fff; border: 0; font-size: 18px; box-shadow: 0 4px 14px rgba(192,57,43,.45); cursor: pointer; z-index: 9000; display: flex; align-items: center; justify-content: center; opacity: .85; padding: 0; }
-  .trade-fab:active { opacity: 1; transform: scale(.96); }
-  body.locked .trade-fab { display: none; }
   .tr-title { font-size: 20px; font-weight: 800; color: #c0392b; margin: 0 0 2px; }
   .tr-sub { font-size: 12px; color: #888; margin: 0 0 16px; }
   .tr-field { margin-bottom: 12px; }
@@ -351,11 +348,9 @@
     </div>
   </div>
 
-  <button class="trade-fab" id="tradeFab" title="Kalkulator Risiko" aria-label="Kalkulator Risiko Trading">📈</button>
-
   <header>
     <div class="bar">
-      <div class="logo">🐔</div>
+      <div class="logo" id="brandLogo">🐔</div>
       <h1 class="brand-title">AMYAM FRESH CHICKEN</h1>
       <div class="spacer"></div>
       <span class="mode-badge" id="modeBadge" title="Real-time aktif"><span class="dot live"></span></span>
@@ -1561,7 +1556,17 @@ window.AmyamStore = (function () {
     box.innerHTML = html;
     try { localStorage.setItem("tr_exchange", String(exchange)); localStorage.setItem("tr_account", $("trAccount").value); localStorage.setItem("tr_pair", $("trPair").value); } catch (e) {}
   }
-  (function () { const f = document.getElementById("tradeFab"); if (f) f.addEventListener("click", openTradeCalc); })();
+  (function () {
+    const logo = document.getElementById("brandLogo");
+    if (!logo) return;
+    let taps = 0, tapTimer = null;
+    logo.addEventListener("click", () => {
+      taps++;
+      clearTimeout(tapTimer);
+      tapTimer = setTimeout(() => { taps = 0; }, 1200);
+      if (taps >= 3) { taps = 0; clearTimeout(tapTimer); openTradeCalc(); }
+    });
+  })();
 </script>
 </body>
 </html>

@@ -334,6 +334,10 @@
   .tr-warn { background: #FCE9E7; color: #c0392b; border-radius: 10px; padding: 10px 12px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
   .tr-note { font-size: 11px; color: #999; margin-top: 12px; line-height: 1.5; }
   .tr-close { width: 100%; margin-top: 14px; padding: 12px; border: 0; border-radius: 12px; background: #eee; color: #444; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .tr-hl { display: flex; gap: 8px; }
+  .tr-hl .tr-input { width: 50%; }
+  .tr-scan-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; background: #fff3e6; color: #c0620f; border: 1px dashed #e0a877; border-radius: 10px; padding: 9px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .tr-scan-btn:active { opacity: .8; }
 </style>
 </head>
 <body class="locked">
@@ -1478,10 +1482,13 @@ window.AmyamStore = (function () {
   };
   function trDec(v) { return parseFloat(String(v == null ? "" : v).replace(/\s/g, "").replace(",", ".")) || 0; }
   function trPipHintUpdate() {
-    const p = trDec($("trPipRange").value);
+    const hi = trDec($("trHigh") ? $("trHigh").value : "");
+    const lo = trDec($("trLow") ? $("trLow").value : "");
     const pair = TR_PAIRS[$("trPair").value];
     const el = $("trPipHint");
-    if (el) el.textContent = (p > 0 && pair) ? ("\u2248 " + Math.round(p / pair.pip).toLocaleString("id-ID") + " pips") : "";
+    if (!el) return;
+    const move = Math.round(Math.abs(hi - lo) * 100000) / 100000;
+    el.textContent = (move > 0 && pair) ? ("Selisih: " + move.toLocaleString("id-ID", { maximumFractionDigits: 5 }) + "  \u2248 " + Math.round(move / pair.pip).toLocaleString("id-ID") + " pips") : "";
   }
   function openTradeCalc() {
     if (document.getElementById("trOv")) return;
@@ -1499,7 +1506,7 @@ window.AmyamStore = (function () {
       '<div class="tr-field"><label>Exchange <span>(nilai tukar broker \u00b7 IDR per 1 USD)</span></label><input class="tr-input" type="text" inputmode="numeric" id="trExchange" placeholder="contoh: 16000" value="' + savedEx + '" /></div>' +
       '<div class="tr-field"><label>Account Type <span>(tipe akun broker)</span></label><select class="tr-select" id="trAccount">' + accOpts + '</select></div>' +
       '<div class="tr-field"><label>Pair</label><select class="tr-select" id="trPair">' + pairOpts + '</select></div>' +
-      '<div class="tr-field"><label>Pip Range <span>(selisih harga: High \u2212 Low)</span></label><input class="tr-input" type="text" inputmode="decimal" id="trPipRange" placeholder="XAUUSD: 10  \u00b7  EURUSD: 0.0050" /><div class="tr-hint" id="trPipHint"></div></div>' +
+      '<div class="tr-field"><label>Harga High &amp; Low <span>(dari chart)</span></label><div class="tr-hl"><input class="tr-input" type="text" inputmode="decimal" id="trHigh" placeholder="High \u2191 4050.68" /><input class="tr-input" type="text" inputmode="decimal" id="trLow" placeholder="Low \u2193 4041.41" /></div><label class="tr-scan-btn" id="trScanBtn">\ud83d\udcf7 Scan chart pakai AI<input type="file" accept="image/*" id="trScan" hidden /></label><div class="tr-hint" id="trPipHint"></div><div class="om-scan-status" id="trScanStatus"></div></div>' +
       '<div class="tr-field"><label>Risk Value <span>(nominal risiko \u00b7 IDR)</span></label><input class="tr-input" type="text" inputmode="numeric" id="trRisk" placeholder="contoh: 1.000.000" /><div class="tr-hint" id="trRiskHint"></div></div>' +
       '<button class="tr-calc-btn" id="trCalcBtn">\ud83c\udfaf Calculate Risk</button>' +
       '<div class="tr-result" id="trResult"></div>' +
@@ -1511,21 +1518,24 @@ window.AmyamStore = (function () {
       if (e.target.closest("#trCalcBtn")) { trCalculate(); return; }
     });
     ov.addEventListener("input", (e) => {
-      if (e.target.id === "trPipRange") trPipHintUpdate();
+      if (e.target.id === "trHigh" || e.target.id === "trLow") trPipHintUpdate();
       if (e.target.id === "trRisk") { const v = omUang(e.target.value); $("trRiskHint").textContent = v > 0 ? ("= " + rupiah(v)) : ""; }
     });
-    ov.addEventListener("change", (e) => { if (e.target.id === "trPair") trPipHintUpdate(); });
+    ov.addEventListener("change", (e) => {
+      if (e.target.id === "trPair") trPipHintUpdate();
+      if (e.target.id === "trScan") trScanChart(e.target);
+    });
   }
   function trCalculate() {
     const exchange = omUang($("trExchange").value);
     const acc = TR_ACCOUNTS[$("trAccount").value];
     const pair = TR_PAIRS[$("trPair").value];
-    const priceMove = trDec($("trPipRange").value);
+    const priceMove = Math.abs(trDec($("trHigh").value) - trDec($("trLow").value));
     const riskIDR = omUang($("trRisk").value);
     const box = $("trResult");
     const errs = [];
     if (!exchange || exchange <= 0) errs.push("Isi nilai tukar (IDR/USD).");
-    if (!priceMove || priceMove <= 0) errs.push("Isi selisih harga (High \u2212 Low) lebih dari 0.");
+    if (!priceMove || priceMove <= 0) errs.push("Isi harga High &amp; Low dulu (selisihnya harus lebih dari 0).");
     if (!riskIDR || riskIDR <= 0) errs.push("Isi nominal risiko (IDR).");
     if (errs.length) { box.innerHTML = '<div class="tr-warn">\u26a0\ufe0f ' + errs.join('<br>\u26a0\ufe0f ') + '</div>'; return; }
     const unitsPerLot = pair.base * acc.factor;
@@ -1547,7 +1557,7 @@ window.AmyamStore = (function () {
     html += rowfn("Pair", pair.label);
     html += rowfn("Tipe akun", acc.label);
     html += rowfn("Kontrak / 1.00 lot", pair.isGold ? (unitsPerLot + " oz emas") : (unitsPerLot.toLocaleString("id-ID") + " unit"));
-    html += rowfn("Selisih harga (SL)", priceMove + "  (\u2248 " + Math.round(pips).toLocaleString("id-ID") + " pips)");
+    html += rowfn("Selisih harga (SL)", (Math.round(priceMove * 100000) / 100000).toLocaleString("id-ID", { maximumFractionDigits: 5 }) + "  (\u2248 " + Math.round(pips).toLocaleString("id-ID") + " pips)");
     html += rowfn("Risiko diinginkan", rupiah(riskIDR) + "  (= $" + riskUSD.toFixed(2) + ")");
     html += rowfn("Risiko per 1.00 lot", "$" + cashPerLotUSD.toLocaleString("en-US", { maximumFractionDigits: 2 }));
     html += rowfn("Estimasi risiko nyata", rupiah(Math.round(actualRiskIDR)) + "  (= $" + actualRiskUSD.toFixed(2) + ")");
@@ -1555,6 +1565,56 @@ window.AmyamStore = (function () {
     html += '<div class="tr-note">Lot dibulatkan ke bawah (kelipatan 0.01) supaya risiko tidak melebihi target. Ukuran kontrak tiap tipe akun mengikuti konvensi umum broker \u2014 cek di platform-mu, kalau beda kabari biar aku sesuaikan.</div>';
     box.innerHTML = html;
     try { localStorage.setItem("tr_exchange", String(exchange)); localStorage.setItem("tr_account", $("trAccount").value); localStorage.setItem("tr_pair", $("trPair").value); } catch (e) {}
+  }
+  async function trGeminiReadChart(file) {
+    const key = aiKey();
+    const b64 = await fileToB64(file);
+    const body = { contents: [{ parts: [
+      { text: "Ini screenshot chart trading (candlestick). Biasanya ada kotak/zona highlight (misalnya warna kuning atau ungu semi-transparan) yang menandai area yang ingin dihitung. Baca dari skala harga di sisi KANAN: harga batas ATAS kotak itu (high) dan harga batas BAWAH kotak itu (low). Kalau tidak ada kotak, pakai harga tertinggi dan terendah candle yang terlihat. Balas HANYA JSON valid tanpa teks lain: {\"high\": <angka>, \"low\": <angka>} dengan TITIK sebagai pemisah desimal." },
+      { inline_data: { mime_type: file.type || "image/jpeg", data: b64 } }
+    ] }], generationConfig: { temperature: 0 } };
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + AI_MODEL + ":generateContent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify(body)
+    });
+    if (res.status === 400 || res.status === 403) { localStorage.removeItem("amyam_gemini_key"); updateAiTag(); throw new Error("API Key AI salah/ditolak \u2014 aktifkan lagi lewat tombol Scan AI."); }
+    if (!res.ok) throw new Error("AI error " + res.status + " (cek koneksi/kuota)");
+    const data = await res.json();
+    const parts = ((((data.candidates || [])[0] || {}).content) || {}).parts || [];
+    let raw = parts.map((p) => p.text || "").join(" ");
+    raw = raw.replace(/```json/gi, "").replace(/```/g, "");
+    let hi = null, lo = null;
+    try {
+      const j = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
+      if (j.high != null) hi = Number(j.high);
+      if (j.low != null) lo = Number(j.low);
+    } catch (e) {
+      const nums = (raw.match(/\d+(?:\.\d+)?/g) || []).map(Number);
+      if (nums.length >= 2) { hi = Math.max(nums[0], nums[1]); lo = Math.min(nums[0], nums[1]); }
+    }
+    if (hi != null && lo != null && hi < lo) { const t = hi; hi = lo; lo = t; }
+    return { high: (isFinite(hi) ? hi : null), low: (isFinite(lo) ? lo : null) };
+  }
+  async function trScanChart(input) {
+    const files = input.files ? Array.from(input.files) : [];
+    input.value = "";
+    if (!files.length) return;
+    const statusEl = $("trScanStatus");
+    if (!statusEl) return;
+    try {
+      ensureAiChoice();
+      if (!aiKey()) { statusEl.innerHTML = '<span class="err">\u26a0\ufe0f Scan chart butuh AI Gemini aktif. Buka menu Kalkulator Omset \u2192 tombol \ud83d\udd11 Scan AI untuk tempel API key gratis dulu.</span>'; return; }
+      statusEl.innerHTML = '<span class="load">\ud83d\udd0d AI membaca harga High &amp; Low dari chart...</span>';
+      const r = await trGeminiReadChart(files[0]);
+      if (!r || (r.high == null && r.low == null)) { statusEl.innerHTML = '<span class="err">\u274c Harga tidak terbaca. Pastikan skala harga di kanan chart kelihatan jelas, atau isi manual.</span>'; return; }
+      if (r.high != null) $("trHigh").value = r.high;
+      if (r.low != null) $("trLow").value = r.low;
+      trPipHintUpdate();
+      statusEl.innerHTML = '<span class="ok">\u2705 Terbaca \u2014 High: <b>' + (r.high != null ? r.high : "?") + '</b> \u00b7 Low: <b>' + (r.low != null ? r.low : "?") + '</b>. Cek &amp; koreksi bila perlu.</span>';
+    } catch (err) {
+      statusEl.innerHTML = '<span class="err">\u274c ' + (err && err.message ? err.message : "Gagal memproses gambar") + '</span>';
+    }
   }
   (function () {
     const logo = document.getElementById("brandLogo");

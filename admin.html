@@ -312,6 +312,31 @@
     background: linear-gradient(160deg, var(--brand) 0%, var(--brand-dark) 100%);
     cursor: pointer; min-height: 48px;
   }
+  /* ====== Kalkulator Risiko Trading ====== */
+  .trade-fab { position: fixed; right: 12px; bottom: 12px; width: 44px; height: 44px; border-radius: 50%; background: #c0392b; color: #fff; border: 0; font-size: 18px; box-shadow: 0 4px 14px rgba(192,57,43,.45); cursor: pointer; z-index: 9000; display: flex; align-items: center; justify-content: center; opacity: .85; padding: 0; }
+  .trade-fab:active { opacity: 1; transform: scale(.96); }
+  body.locked .trade-fab { display: none; }
+  .tr-title { font-size: 20px; font-weight: 800; color: #c0392b; margin: 0 0 2px; }
+  .tr-sub { font-size: 12px; color: #888; margin: 0 0 16px; }
+  .tr-field { margin-bottom: 12px; }
+  .tr-field label { display: block; font-size: 13px; font-weight: 700; color: #333; margin-bottom: 5px; }
+  .tr-field label span { font-weight: 400; color: #999; font-size: 11px; }
+  .tr-input, .tr-select { width: 100%; box-sizing: border-box; font-family: inherit; font-size: 16px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+  .tr-hint { font-size: 12px; color: #2c7a54; font-weight: 600; margin-top: 4px; min-height: 14px; }
+  .tr-calc-btn { width: 100%; margin-top: 6px; padding: 14px; border: 0; border-radius: 12px; background: #c0392b; color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; }
+  .tr-calc-btn:active { opacity: .9; }
+  .tr-result { margin-top: 14px; }
+  .tr-lot { text-align: center; background: #eaf6ef; border: 2px solid #2c7a54; border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .tr-lot .lbl { font-size: 13px; color: #2c7a54; font-weight: 700; }
+  .tr-lot .val { font-size: 40px; font-weight: 900; color: #1e5c3f; line-height: 1.1; }
+  .tr-lot .unit { font-size: 16px; }
+  .tr-break { font-size: 13px; }
+  .tr-break .row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+  .tr-break .row span { color: #666; }
+  .tr-break .row b { color: #222; text-align: right; }
+  .tr-warn { background: #FCE9E7; color: #c0392b; border-radius: 10px; padding: 10px 12px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .tr-note { font-size: 11px; color: #999; margin-top: 12px; line-height: 1.5; }
+  .tr-close { width: 100%; margin-top: 14px; padding: 12px; border: 0; border-radius: 12px; background: #eee; color: #444; font-size: 15px; font-weight: 700; cursor: pointer; }
 </style>
 </head>
 <body class="locked">
@@ -325,6 +350,8 @@
       <button id="pinBtn">Masuk</button>
     </div>
   </div>
+
+  <button class="trade-fab" id="tradeFab" title="Kalkulator Risiko" aria-label="Kalkulator Risiko Trading">📈</button>
 
   <header>
     <div class="bar">
@@ -1441,6 +1468,100 @@ window.AmyamStore = (function () {
     allOrders = orders;
     render();
   });
+
+  // ====== Kalkulator Risiko Trading (terpisah dari kalkulator ayam) ======
+  const TR_PAIRS = {
+    XAUUSD: { label: "XAU/USD (Emas)", base: 100, pip: 0.01, isGold: true },
+    EURUSD: { label: "EUR/USD", base: 100000, pip: 0.0001, isGold: false },
+    GBPUSD: { label: "GBP/USD", base: 100000, pip: 0.0001, isGold: false }
+  };
+  const TR_ACCOUNTS = {
+    standard: { label: "Standard", factor: 1 },
+    micro: { label: "Micro (kontrak penuh)", factor: 1 },
+    scalping: { label: "ScalpX / Scalping", factor: 1 },
+    cent: { label: "Cent (saldo sen \u00b7 1/100)", factor: 0.01 }
+  };
+  function trDec(v) { return parseFloat(String(v == null ? "" : v).replace(/\s/g, "").replace(",", ".")) || 0; }
+  function trPipHintUpdate() {
+    const p = trDec($("trPipRange").value);
+    const pair = TR_PAIRS[$("trPair").value];
+    const el = $("trPipHint");
+    if (el) el.textContent = (p > 0 && pair) ? ("\u2248 " + Math.round(p / pair.pip).toLocaleString("id-ID") + " pips") : "";
+  }
+  function openTradeCalc() {
+    if (document.getElementById("trOv")) return;
+    const savedEx = localStorage.getItem("tr_exchange") || "";
+    const savedAcc = localStorage.getItem("tr_account") || "standard";
+    const savedPair = localStorage.getItem("tr_pair") || "XAUUSD";
+    const accOpts = Object.keys(TR_ACCOUNTS).map((k) => '<option value="' + k + '"' + (k === savedAcc ? " selected" : "") + '>' + TR_ACCOUNTS[k].label + '</option>').join("");
+    const pairOpts = Object.keys(TR_PAIRS).map((k) => '<option value="' + k + '"' + (k === savedPair ? " selected" : "") + '>' + TR_PAIRS[k].label + '</option>').join("");
+    const ov = document.createElement("div");
+    ov.className = "struk-ov"; ov.id = "trOv";
+    ov.innerHTML =
+      '<div class="rw-card">' +
+      '<div class="tr-title">\ud83d\udcc8 Kalkulator Risiko Trading</div>' +
+      '<div class="tr-sub">Hitung lot size dari nominal risiko (IDR)</div>' +
+      '<div class="tr-field"><label>Exchange <span>(nilai tukar broker \u00b7 IDR per 1 USD)</span></label><input class="tr-input" type="text" inputmode="numeric" id="trExchange" placeholder="contoh: 16000" value="' + savedEx + '" /></div>' +
+      '<div class="tr-field"><label>Account Type <span>(tipe akun broker)</span></label><select class="tr-select" id="trAccount">' + accOpts + '</select></div>' +
+      '<div class="tr-field"><label>Pair</label><select class="tr-select" id="trPair">' + pairOpts + '</select></div>' +
+      '<div class="tr-field"><label>Pip Range <span>(selisih harga: High \u2212 Low)</span></label><input class="tr-input" type="text" inputmode="decimal" id="trPipRange" placeholder="XAUUSD: 10  \u00b7  EURUSD: 0.0050" /><div class="tr-hint" id="trPipHint"></div></div>' +
+      '<div class="tr-field"><label>Risk Value <span>(nominal risiko \u00b7 IDR)</span></label><input class="tr-input" type="text" inputmode="numeric" id="trRisk" placeholder="contoh: 1.000.000" /><div class="tr-hint" id="trRiskHint"></div></div>' +
+      '<button class="tr-calc-btn" id="trCalcBtn">\ud83c\udfaf Calculate Risk</button>' +
+      '<div class="tr-result" id="trResult"></div>' +
+      '<button class="tr-close" id="trCloseBtn">\u2715 Tutup</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov || e.target.closest("#trCloseBtn")) { ov.remove(); return; }
+      if (e.target.closest("#trCalcBtn")) { trCalculate(); return; }
+    });
+    ov.addEventListener("input", (e) => {
+      if (e.target.id === "trPipRange") trPipHintUpdate();
+      if (e.target.id === "trRisk") { const v = omUang(e.target.value); $("trRiskHint").textContent = v > 0 ? ("= " + rupiah(v)) : ""; }
+    });
+    ov.addEventListener("change", (e) => { if (e.target.id === "trPair") trPipHintUpdate(); });
+  }
+  function trCalculate() {
+    const exchange = omUang($("trExchange").value);
+    const acc = TR_ACCOUNTS[$("trAccount").value];
+    const pair = TR_PAIRS[$("trPair").value];
+    const priceMove = trDec($("trPipRange").value);
+    const riskIDR = omUang($("trRisk").value);
+    const box = $("trResult");
+    const errs = [];
+    if (!exchange || exchange <= 0) errs.push("Isi nilai tukar (IDR/USD).");
+    if (!priceMove || priceMove <= 0) errs.push("Isi selisih harga (High \u2212 Low) lebih dari 0.");
+    if (!riskIDR || riskIDR <= 0) errs.push("Isi nominal risiko (IDR).");
+    if (errs.length) { box.innerHTML = '<div class="tr-warn">\u26a0\ufe0f ' + errs.join('<br>\u26a0\ufe0f ') + '</div>'; return; }
+    const unitsPerLot = pair.base * acc.factor;
+    const cashPerLotUSD = unitsPerLot * priceMove;
+    const riskUSD = riskIDR / exchange;
+    const lotRaw = riskUSD / cashPerLotUSD;
+    const lot = Math.floor(lotRaw * 100) / 100;
+    const pips = priceMove / pair.pip;
+    const useLot = lot < 0.01 ? 0.01 : lot;
+    const actualRiskUSD = useLot * cashPerLotUSD;
+    const actualRiskIDR = actualRiskUSD * exchange;
+    const rowfn = (a, b) => '<div class="row"><span>' + a + '</span><b>' + b + '</b></div>';
+    let html = "";
+    if (lot < 0.01) {
+      html += '<div class="tr-warn">\u26a0\ufe0f Lot hasil hitungan (' + lotRaw.toFixed(4) + ') di bawah minimum 0.01. Kalau tetap pakai 0.01, risiko nyata jadi ' + rupiah(Math.round(actualRiskIDR)) + '. Perbesar risiko / perkecil pip range / pakai akun Cent atau Micro.</div>';
+    }
+    html += '<div class="tr-lot"><div class="lbl">LOT SIZE yang harus diisi</div><div class="val">' + useLot.toFixed(2) + ' <span class="unit">lot</span></div></div>';
+    html += '<div class="tr-break">';
+    html += rowfn("Pair", pair.label);
+    html += rowfn("Tipe akun", acc.label);
+    html += rowfn("Kontrak / 1.00 lot", pair.isGold ? (unitsPerLot + " oz emas") : (unitsPerLot.toLocaleString("id-ID") + " unit"));
+    html += rowfn("Selisih harga (SL)", priceMove + "  (\u2248 " + Math.round(pips).toLocaleString("id-ID") + " pips)");
+    html += rowfn("Risiko diinginkan", rupiah(riskIDR) + "  (= $" + riskUSD.toFixed(2) + ")");
+    html += rowfn("Risiko per 1.00 lot", "$" + cashPerLotUSD.toLocaleString("en-US", { maximumFractionDigits: 2 }));
+    html += rowfn("Estimasi risiko nyata", rupiah(Math.round(actualRiskIDR)) + "  (= $" + actualRiskUSD.toFixed(2) + ")");
+    html += '</div>';
+    html += '<div class="tr-note">Lot dibulatkan ke bawah (kelipatan 0.01) supaya risiko tidak melebihi target. Ukuran kontrak tiap tipe akun mengikuti konvensi umum broker \u2014 cek di platform-mu, kalau beda kabari biar aku sesuaikan.</div>';
+    box.innerHTML = html;
+    try { localStorage.setItem("tr_exchange", String(exchange)); localStorage.setItem("tr_account", $("trAccount").value); localStorage.setItem("tr_pair", $("trPair").value); } catch (e) {}
+  }
+  (function () { const f = document.getElementById("tradeFab"); if (f) f.addEventListener("click", openTradeCalc); })();
 </script>
 </body>
 </html>

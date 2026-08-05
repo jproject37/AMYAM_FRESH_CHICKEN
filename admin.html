@@ -267,6 +267,9 @@
   .struk-row b { color: #111; }
   .struk-row.sub { font-size: 12px; color: #999; padding: 0 0 8px; margin-top: -2px; }
   .struk-row.sub b { color: #666; font-weight: 700; }
+  .struk-row.rincian { font-size: 12.5px; color: #a89f92; padding: 2px 0; }
+  .struk-row.rincian span { padding-left: 4px; }
+  .struk-row.rincian b { color: #8a8074; font-weight: 700; }
   .struk-total { display: flex; justify-content: space-between; align-items: center; background: #e8f6ee; border-radius: 11px; padding: 13px 15px; font-size: 16px; font-weight: 800; color: #2c7a54; }
   .struk-time { font-size: 12px; color: #666; margin-top: 4px; line-height: 1.7; }
   .struk-foot { font-size: 13px; color: #333; margin-top: 14px; font-style: italic; }
@@ -910,7 +913,7 @@ window.AmyamStore = (function () {
       n += '</div>';
       html += n;
     }
-    window.__omLast = { bAyam: bAyam, bJerohan: bJerohan, netAyam: netAyam, netJerohan: netJerohan, hSetor: hSetor, hJerohan: hJerohan, subAyam: subAyam, subJerohan: subJerohan, subtotal: subtotal, potWajib: POT_WAJIB, potAyamKg: POT_AYAM, potJerohanKg: POT_JEROHAN, omset: setoran, potItems: potLainItems, potLain: potLain, uangMasuk: uangMasuk, hutangItems: hutangItems, hutangHari: hutangHari, sisaAyam: sisaAyam, bayaranItems: bayaranItems, totalBayaran: totalBayaran, uangEfektif: uangEfektif };
+    window.__omLast = { bAyam: bAyam, wAyam: wAyam, bJerohan: bJerohan, netAyam: netAyam, netJerohan: netJerohan, hSetor: hSetor, hJerohan: hJerohan, subAyam: subAyam, subJerohan: subJerohan, subtotal: subtotal, potWajib: POT_WAJIB, potAyamKg: POT_AYAM, potJerohanKg: POT_JEROHAN, omset: setoran, potItems: potLainItems, potLain: potLain, uangMasuk: uangMasuk, hutangItems: hutangItems, hutangHari: hutangHari, sisaAyam: sisaAyam, bayaranItems: bayaranItems, totalBayaran: totalBayaran, uangEfektif: uangEfektif };
     html += `<button class="om-struk" id="strukBtn">🧾 Cetak / Kirim Struk Setoran</button>`;
     html += `<button class="om-save-rw" id="saveRwBtn">💾 Simpan ke Riwayat</button>`;
     $("omResult").innerHTML = html;
@@ -1113,7 +1116,10 @@ window.AmyamStore = (function () {
         '<div class="struk-brand">🐔 AMYAM FRESH CHICKEN</div>' +
         '<div class="struk-sub">STRUK SETORAN</div>' +
         '<div class="struk-sep"></div>' +
-        (d.bAyam > 0 ? ('<div class="struk-row"><span>Bobot Ayam</span><b>' + d.bAyam + ' Kg</b></div>' + '<div class="struk-row sub"><span>(−' + d.potAyamKg + ' kg) ' + d.netAyam + ' kg × ' + rupiah(d.hSetor) + '</span><b>' + rupiah(d.subAyam) + '</b></div>') : '') +
+        (d.bAyam > 0 ? (
+          ((d.wAyam && d.wAyam.length > 1) ? d.wAyam.map(function (w, i) { return '<div class="struk-row rincian"><span>Timbang ' + (i + 1) + '</span><b>' + w + ' kg</b></div>'; }).join('') : '') +
+          '<div class="struk-row"><span>Bobot Ayam</span><b>' + d.bAyam + ' Kg</b></div>' + '<div class="struk-row sub"><span>(−' + d.potAyamKg + ' kg) ' + d.netAyam + ' kg × ' + rupiah(d.hSetor) + '</span><b>' + rupiah(d.subAyam) + '</b></div>'
+        ) : '') +
         (d.bJerohan > 0 ? ('<div class="struk-row"><span>Bobot Jerohan</span><b>' + d.bJerohan + ' Kg</b></div>' + '<div class="struk-row sub"><span>(−' + d.potJerohanKg + ' kg) ' + d.netJerohan + ' kg × ' + rupiah(d.hJerohan) + '</span><b>' + rupiah(d.subJerohan) + '</b></div>') : '') +
         '<div class="struk-sep"></div>' +
         '<div class="struk-row"><span>Subtotal</span><b>' + rupiah(d.subtotal) + '</b></div>' +
@@ -1144,6 +1150,12 @@ window.AmyamStore = (function () {
     let y = 120;
     ops.push({ t: 'dash', y: y }); y += 4;
     if (d.bAyam > 0) {
+      if (d.wAyam && d.wAyam.length > 1) {
+        d.wAyam.forEach((w, i) => {
+          y += (i === 0 ? 34 : 24);
+          ops.push({ t: 'row', label: 'Timbang ' + (i + 1), val: w + ' kg', y: y, opt: { lf: '13px Arial', vf: '13px Arial', lc: '#a89f92', vc: '#8a8074', x: 60 } });
+        });
+      }
       y += 40; ops.push({ t: 'row', label: 'Bobot Ayam', val: d.bAyam + ' Kg', y: y });
       y += 26; ops.push({ t: 'row', label: '(−' + d.potAyamKg + ' kg) ' + d.netAyam + ' kg × ' + rupiah(d.hSetor), val: rupiah(d.subAyam), y: y, opt: { lf: '14px Arial', vf: '15px Arial', lc: '#999999', vc: '#444444', x: 56 } });
     }

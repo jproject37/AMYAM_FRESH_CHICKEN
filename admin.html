@@ -861,6 +861,11 @@ window.AmyamStore = (function () {
     }
     let html = "";
     if (bAyam > 0) {
+      if (wAyam.length > 1) {
+        wAyam.forEach((w, i) => {
+          html += `<div class="line om-potitem"><span>· Timbang ${i + 1}</span><b>${w} kg</b></div>`;
+        });
+      }
       html += `<div class="line"><span>Total bobot ayam (${wAyam.length} entri)</span><b>${bAyam} kg</b></div>`;
       html += `<div class="line"><span>Ayam: ${bAyam} − ${POT_AYAM} kg = ${netAyam} kg × ${rupiah(hSetor)}</span><b>${rupiah(subAyam)}</b></div>`;
     }

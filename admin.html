@@ -335,6 +335,11 @@
   .tr-break .row span { color: #666; }
   .tr-break .row b { color: #222; text-align: right; }
   .tr-warn { background: #FCE9E7; color: #c0392b; border-radius: 10px; padding: 10px 12px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .tr-divider { border: none; border-top: 1px dashed #ddd; margin: 18px 0 14px; }
+  .tr-title2 { font-size: 15px; font-weight: 800; color: #c0392b; margin: 0 0 2px; }
+  .tr-idr { text-align: center; background: #eef3fb; border: 2px solid #2b5faa; border-radius: 14px; padding: 16px; margin-bottom: 4px; }
+  .tr-idr .lbl { font-size: 13px; color: #2b5faa; font-weight: 700; }
+  .tr-idr .val { font-size: 28px; font-weight: 900; color: #1a3f70; line-height: 1.2; }
   .tr-note { font-size: 11px; color: #999; margin-top: 12px; line-height: 1.5; }
   .tr-close { width: 100%; margin-top: 14px; padding: 12px; border: 0; border-radius: 12px; background: #eee; color: #444; font-size: 15px; font-weight: 700; cursor: pointer; }
   .tr-hl { display: flex; gap: 8px; }
@@ -1527,12 +1532,20 @@ window.AmyamStore = (function () {
       '<div class="tr-field"><label>Risk Value <span>(nominal risiko \u00b7 IDR)</span></label><input class="tr-input" type="text" inputmode="numeric" id="trRisk" placeholder="contoh: 1.000.000" /><div class="tr-hint" id="trRiskHint"></div></div>' +
       '<button class="tr-calc-btn" id="trCalcBtn">\ud83c\udfaf Calculate Risk</button>' +
       '<div class="tr-result" id="trResult"></div>' +
+      '<hr class="tr-divider" />' +
+      '<div class="tr-title2">\ud83d\udd01 Konversi Poin ke Rupiah</div>' +
+      '<div class="tr-sub">Ukur jarak swing di chart (poin), lihat nilainya dalam Rupiah \u00b7 pakai Pair &amp; Account Type di atas</div>' +
+      '<div class="tr-field"><label>Lot <span>(ukuran posisi \u00b7 isi manual)</span></label><input class="tr-input" type="text" inputmode="decimal" id="trPtLot" placeholder="contoh: 0.05" /></div>' +
+      '<div class="tr-field"><label>Poin <span>(dari pengukuran di chart)</span></label><input class="tr-input" type="text" inputmode="decimal" id="trPtPoin" placeholder="contoh: 2152" /></div>' +
+      '<button class="tr-calc-btn" id="trPtBtn">\ud83d\udd01 Hitung Nilai (Rp)</button>' +
+      '<div class="tr-result" id="trPtResult"></div>' +
       '<button class="tr-close" id="trCloseBtn">\u2715 Tutup</button>' +
       '</div>';
     document.body.appendChild(ov);
     ov.addEventListener("click", (e) => {
       if (e.target === ov || e.target.closest("#trCloseBtn")) { ov.remove(); return; }
       if (e.target.closest("#trCalcBtn")) { trCalculate(); return; }
+      if (e.target.closest("#trPtBtn")) { trPointsToRupiah(); return; }
     });
     ov.addEventListener("input", (e) => {
       if (e.target.id === "trHigh" || e.target.id === "trLow") trPipHintUpdate();
@@ -1580,6 +1593,38 @@ window.AmyamStore = (function () {
     html += rowfn("Estimasi risiko nyata", rupiah(Math.round(actualRiskIDR)) + "  (= $" + actualRiskUSD.toFixed(2) + ")");
     html += '</div>';
     html += '<div class="tr-note">Lot dibulatkan ke bawah (kelipatan 0.01) supaya risiko tidak melebihi target. Ukuran kontrak tiap tipe akun mengikuti konvensi umum broker \u2014 cek di platform-mu, kalau beda kabari biar aku sesuaikan.</div>';
+    box.innerHTML = html;
+    try { localStorage.setItem("tr_exchange", String(exchange)); localStorage.setItem("tr_account", $("trAccount").value); localStorage.setItem("tr_pair", $("trPair").value); } catch (e) {}
+  }
+  function trPointsToRupiah() {
+    const exchange = omUang($("trExchange").value);
+    const acc = TR_ACCOUNTS[$("trAccount").value];
+    const pair = TR_PAIRS[$("trPair").value];
+    const lot = trDec($("trPtLot").value);
+    const points = trDec($("trPtPoin").value);
+    const box = $("trPtResult");
+    const errs = [];
+    if (!exchange || exchange <= 0) errs.push("Isi nilai tukar (IDR/USD) di atas.");
+    if (!lot || lot <= 0) errs.push("Isi Lot dulu.");
+    if (!points || points <= 0) errs.push("Isi Poin dulu.");
+    if (errs.length) { box.innerHTML = '<div class="tr-warn">\u26a0\ufe0f ' + errs.join('<br>\u26a0\ufe0f ') + '</div>'; return; }
+    const priceMove = points * pair.pip;
+    const unitsPerLot = pair.base * acc.factor;
+    const cashPerLotUSD = unitsPerLot * priceMove;
+    const valueUSD = cashPerLotUSD * lot;
+    const valueIDR = valueUSD * exchange;
+    const rowfn = (a, b) => '<div class="row"><span>' + a + '</span><b>' + b + '</b></div>';
+    let html = "";
+    html += '<div class="tr-idr"><div class="lbl">NILAI ' + points.toLocaleString("id-ID") + ' POIN</div><div class="val">' + rupiah(Math.round(valueIDR)) + '</div></div>';
+    html += '<div class="tr-break">';
+    html += rowfn("Pair", pair.label);
+    html += rowfn("Tipe akun", acc.label);
+    html += rowfn("Lot", lot.toFixed(2));
+    html += rowfn("Poin \u2192 selisih harga", points.toLocaleString("id-ID") + " poin \u2248 " + priceMove.toLocaleString("id-ID", { maximumFractionDigits: 5 }));
+    html += rowfn("Nilai per 1.00 lot", "$" + cashPerLotUSD.toLocaleString("en-US", { maximumFractionDigits: 2 }));
+    html += rowfn("Nilai untuk " + lot.toFixed(2) + " lot", "$" + valueUSD.toFixed(2));
+    html += '</div>';
+    html += '<div class="tr-note">Nilai poin mengikuti konvensi akun (Cent/Rookie \u00d7 0.01) dan pair yang lagi dipilih di atas.</div>';
     box.innerHTML = html;
     try { localStorage.setItem("tr_exchange", String(exchange)); localStorage.setItem("tr_account", $("trAccount").value); localStorage.setItem("tr_pair", $("trPair").value); } catch (e) {}
   }

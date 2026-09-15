@@ -381,6 +381,10 @@
           <span class="menu-ico">💰</span>
           <span class="menu-tx"><b>Kalkulator Omset</b><small>Hitung setoran &amp; cetak struk</small></span>
         </button>
+        <button class="menu-btn omset" id="goTrading">
+          <span class="menu-ico">📈</span>
+          <span class="menu-tx"><b>Kalkulator Risiko Trading</b><small>Hitung lot size &amp; konversi poin</small></span>
+        </button>
       </div>
     </div>
 
@@ -412,6 +416,11 @@
     <div class="screen" id="screenOmset" hidden>
       <button class="back-btn" data-home>← Menu</button>
       <div class="omset-panel show" id="omsetPanel"></div>
+    </div>
+
+    <div class="screen" id="screenTrading" hidden>
+      <button class="back-btn" data-home>← Menu</button>
+      <div class="omset-panel show" id="tradingPanel"></div>
     </div>
   </main>
 
@@ -1466,7 +1475,7 @@ window.AmyamStore = (function () {
   });
 
   function showScreen(name) {
-    ["Home", "Pesanan", "Omset"].forEach((n) => {
+    ["Home", "Pesanan", "Omset", "Trading"].forEach((n) => {
       const el = $("screen" + n);
       if (el) el.hidden = n.toLowerCase() !== name;
     });
@@ -1474,6 +1483,7 @@ window.AmyamStore = (function () {
   }
   $("goPesanan").addEventListener("click", () => showScreen("pesanan"));
   $("goOmset").addEventListener("click", () => { renderOmset(); updateAiTag(); showScreen("omset"); });
+  $("goTrading").addEventListener("click", () => { renderTradeCalc(); showScreen("trading"); });
   document.querySelectorAll("[data-home]").forEach((b) => b.addEventListener("click", () => showScreen("home")));
 
   // Langganan data real-time
@@ -1512,17 +1522,13 @@ window.AmyamStore = (function () {
     const move = Math.round(Math.abs(hi - lo) * 100000) / 100000;
     el.textContent = (move > 0 && pair) ? ("Selisih: " + move.toLocaleString("id-ID", { maximumFractionDigits: 5 }) + "  \u2248 " + Math.round(move / pair.pip).toLocaleString("id-ID") + " pips") : "";
   }
-  function openTradeCalc() {
-    if (document.getElementById("trOv")) return;
+  function renderTradeCalc() {
     const savedEx = localStorage.getItem("tr_exchange") || "";
     const savedAcc = localStorage.getItem("tr_account") || "standard";
     const savedPair = localStorage.getItem("tr_pair") || "XAUUSD";
     const accOpts = Object.keys(TR_ACCOUNTS).map((k) => '<option value="' + k + '"' + (k === savedAcc ? " selected" : "") + '>' + TR_ACCOUNTS[k].label + '</option>').join("");
     const pairOpts = Object.keys(TR_PAIRS).map((k) => '<option value="' + k + '"' + (k === savedPair ? " selected" : "") + '>' + TR_PAIRS[k].label + '</option>').join("");
-    const ov = document.createElement("div");
-    ov.className = "struk-ov"; ov.id = "trOv";
-    ov.innerHTML =
-      '<div class="rw-card">' +
+    $("tradingPanel").innerHTML =
       '<div class="tr-title">\ud83d\udcc8 Kalkulator Risiko Trading</div>' +
       '<div class="tr-sub">Hitung lot size dari nominal risiko (IDR)</div>' +
       '<div class="tr-field"><label>Exchange <span>(nilai tukar broker \u00b7 IDR per 1 USD)</span></label><input class="tr-input" type="text" inputmode="numeric" id="trExchange" placeholder="contoh: 16000" value="' + savedEx + '" /></div>' +
@@ -1538,24 +1544,20 @@ window.AmyamStore = (function () {
       '<div class="tr-field"><label>Lot <span>(ukuran posisi \u00b7 isi manual)</span></label><input class="tr-input" type="text" inputmode="decimal" id="trPtLot" placeholder="contoh: 0.05" /></div>' +
       '<div class="tr-field"><label>Poin <span>(dari pengukuran di chart)</span></label><input class="tr-input" type="text" inputmode="decimal" id="trPtPoin" placeholder="contoh: 2152" /></div>' +
       '<button class="tr-calc-btn" id="trPtBtn">\ud83d\udd01 Hitung Nilai (Rp)</button>' +
-      '<div class="tr-result" id="trPtResult"></div>' +
-      '<button class="tr-close" id="trCloseBtn">\u2715 Tutup</button>' +
-      '</div>';
-    document.body.appendChild(ov);
-    ov.addEventListener("click", (e) => {
-      if (e.target === ov || e.target.closest("#trCloseBtn")) { ov.remove(); return; }
-      if (e.target.closest("#trCalcBtn")) { trCalculate(); return; }
-      if (e.target.closest("#trPtBtn")) { trPointsToRupiah(); return; }
-    });
-    ov.addEventListener("input", (e) => {
-      if (e.target.id === "trHigh" || e.target.id === "trLow") trPipHintUpdate();
-      if (e.target.id === "trRisk") { const v = omUang(e.target.value); $("trRiskHint").textContent = v > 0 ? ("= " + rupiah(v)) : ""; }
-    });
-    ov.addEventListener("change", (e) => {
-      if (e.target.id === "trPair") trPipHintUpdate();
-      if (e.target.id === "trScan") trScanChart(e.target);
-    });
+      '<div class="tr-result" id="trPtResult"></div>';
   }
+  $("tradingPanel").addEventListener("click", (e) => {
+    if (e.target.closest("#trCalcBtn")) { trCalculate(); return; }
+    if (e.target.closest("#trPtBtn")) { trPointsToRupiah(); return; }
+  });
+  $("tradingPanel").addEventListener("input", (e) => {
+    if (e.target.id === "trHigh" || e.target.id === "trLow") trPipHintUpdate();
+    if (e.target.id === "trRisk") { const v = omUang(e.target.value); $("trRiskHint").textContent = v > 0 ? ("= " + rupiah(v)) : ""; }
+  });
+  $("tradingPanel").addEventListener("change", (e) => {
+    if (e.target.id === "trPair") trPipHintUpdate();
+    if (e.target.id === "trScan") trScanChart(e.target);
+  });
   function trCalculate() {
     const exchange = omUang($("trExchange").value);
     const acc = TR_ACCOUNTS[$("trAccount").value];
@@ -1678,17 +1680,6 @@ window.AmyamStore = (function () {
       statusEl.innerHTML = '<span class="err">\u274c ' + (err && err.message ? err.message : "Gagal memproses gambar") + '</span>';
     }
   }
-  (function () {
-    const logo = document.getElementById("brandLogo");
-    if (!logo) return;
-    let taps = 0, tapTimer = null;
-    logo.addEventListener("click", () => {
-      taps++;
-      clearTimeout(tapTimer);
-      tapTimer = setTimeout(() => { taps = 0; }, 1200);
-      if (taps >= 3) { taps = 0; clearTimeout(tapTimer); openTradeCalc(); }
-    });
-  })();
 </script>
 </body>
 </html>

@@ -344,6 +344,9 @@
   .tr-close { width: 100%; margin-top: 14px; padding: 12px; border: 0; border-radius: 12px; background: #eee; color: #444; font-size: 15px; font-weight: 700; cursor: pointer; }
   .tr-hl { display: flex; gap: 8px; }
   .tr-hl .tr-input { width: 50%; }
+  .tr-hl .tr-calc-btn { width: calc(50% - 4px); margin-top: 0; }
+  #trBuyBtn { background: #1e8e3e; }
+  #trSellBtn { background: #c0392b; }
   .tr-scan-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; background: #fff3e6; color: #c0620f; border: 1px dashed #e0a877; border-radius: 10px; padding: 9px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .tr-scan-btn:active { opacity: .8; }
 </style>
@@ -1544,11 +1547,35 @@ window.AmyamStore = (function () {
       '<div class="tr-field"><label>Lot <span>(ukuran posisi \u00b7 isi manual)</span></label><input class="tr-input" type="text" inputmode="decimal" id="trPtLot" placeholder="contoh: 0.05" /></div>' +
       '<div class="tr-field"><label>Poin <span>(dari pengukuran di chart)</span></label><input class="tr-input" type="text" inputmode="decimal" id="trPtPoin" placeholder="contoh: 2152" /></div>' +
       '<button class="tr-calc-btn" id="trPtBtn">\ud83d\udd01 Hitung Nilai (Rp)</button>' +
-      '<div class="tr-result" id="trPtResult"></div>';
+      '<div class="tr-result" id="trPtResult"></div>' +
+      '<hr class="tr-divider" />' +
+      '<div class="tr-title2">\ud83c\udfaf Buy/Sell dari Harga Market</div>' +
+      '<div class="tr-sub">Isi harga market saat ini, lalu pilih Buy atau Sell</div>' +
+      '<div class="tr-field"><label>Harga Market Saat Ini</label><input class="tr-input" type="text" inputmode="decimal" id="trMktPrice" placeholder="contoh: 4050.68" /></div>' +
+      '<div class="tr-hl"><button class="tr-calc-btn" id="trBuyBtn">\ud83d\udfe2 Buy</button><button class="tr-calc-btn" id="trSellBtn">\ud83d\udd34 Sell</button></div>' +
+      '<div class="tr-result" id="trMktResult"></div>';
+  }
+  function trMarketCalc(type) {
+    const price = trDec($("trMktPrice").value);
+    const box = $("trMktResult");
+    if (!price || price <= 0) { box.innerHTML = '<div class="tr-warn">\u26a0\ufe0f Isi harga market dulu.</div>'; return; }
+    const sqrtP = Math.sqrt(price);
+    const result = type === "buy" ? Math.pow(sqrtP - 0.125, 2) : Math.pow(sqrtP + 0.125, 2);
+    const rowfn = (a, b) => '<div class="row"><span>' + a + '</span><b>' + b + '</b></div>';
+    const label = type === "buy" ? "\ud83d\udfe2 BUY" : "\ud83d\udd34 SELL";
+    const formula = type === "buy" ? "(\u221ah \u2212 0.125)\u00b2" : "(\u221ah + 0.125)\u00b2";
+    let html = '<div class="tr-lot"><div class="lbl">' + label + '</div><div class="val">' + result.toLocaleString("id-ID", { maximumFractionDigits: 5 }) + '</div></div>';
+    html += '<div class="tr-break">';
+    html += rowfn("Harga market", price.toLocaleString("id-ID", { maximumFractionDigits: 5 }));
+    html += rowfn("Rumus", formula);
+    html += '</div>';
+    box.innerHTML = html;
   }
   $("tradingPanel").addEventListener("click", (e) => {
     if (e.target.closest("#trCalcBtn")) { trCalculate(); return; }
     if (e.target.closest("#trPtBtn")) { trPointsToRupiah(); return; }
+    if (e.target.closest("#trBuyBtn")) { trMarketCalc("buy"); return; }
+    if (e.target.closest("#trSellBtn")) { trMarketCalc("sell"); return; }
   });
   $("tradingPanel").addEventListener("input", (e) => {
     if (e.target.id === "trHigh" || e.target.id === "trLow") trPipHintUpdate();

@@ -286,35 +286,6 @@
     main { padding: 16px; }
   }
 
-  /* Kunci PIN admin */
-  body.locked { overflow: hidden; }
-  .lock {
-    position: fixed; inset: 0; z-index: 100;
-    background: var(--soft);
-    display: flex; align-items: center; justify-content: center; padding: 24px;
-  }
-  .lock.hide { display: none; }
-  .lock-card {
-    background: var(--canvas); border: 1px solid var(--border); border-radius: 16px;
-    padding: 30px 24px; width: 100%; max-width: 340px; text-align: center;
-    box-shadow: 0 8px 28px rgba(0,0,0,.07);
-  }
-  .lock .logo { margin: 0 auto 14px; width: 52px; height: 52px; font-size: 26px; }
-  .lock h2 { font-size: 19px; font-weight: 800; margin-bottom: 4px; }
-  .lock p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
-  .lock .err-msg { color: var(--brand-dark); font-size: 13px; min-height: 18px; margin-bottom: 6px; }
-  .lock input {
-    width: 100%; text-align: center; letter-spacing: .4em; font-size: 22px;
-    font-family: inherit; padding: 13px; border: 1px solid var(--border);
-    border-radius: 10px; background: var(--soft); margin-bottom: 12px;
-  }
-  .lock input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(229,100,88,.15); background: #fff; }
-  .lock button {
-    width: 100%; border: none; border-radius: 12px; padding: 14px;
-    font-family: inherit; font-size: 15px; font-weight: 700; color: #fff;
-    background: linear-gradient(160deg, var(--brand) 0%, var(--brand-dark) 100%);
-    cursor: pointer; min-height: 48px;
-  }
   /* ====== Kalkulator Risiko Trading ====== */
   .tr-title { font-size: 20px; font-weight: 800; color: #c0392b; margin: 0 0 2px; }
   .tr-sub { font-size: 12px; color: #888; margin: 0 0 16px; }
@@ -351,18 +322,7 @@
   .tr-scan-btn:active { opacity: .8; }
 </style>
 </head>
-<body class="locked">
-  <div class="lock" id="lock">
-    <div class="lock-card">
-      <div class="logo">🔒</div>
-      <h2>Panel Admin</h2>
-      <p>Masukkan PIN untuk masuk</p>
-      <div class="err-msg" id="lockErr"></div>
-      <input id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off" />
-      <button id="pinBtn">Masuk</button>
-    </div>
-  </div>
-
+<body>
   <header>
     <div class="bar">
       <div class="logo" id="brandLogo">🐔</div>
@@ -612,36 +572,6 @@ window.AmyamStore = (function () {
 
 </script>
 <script>
-  /* ====== PIN ADMIN ======
-     Ganti angka di bawah ini dengan PIN pilihan Anda. */
-  const ADMIN_PIN = "080888";
-
-  (function initLock() {
-    const lock = document.getElementById("lock");
-    const input = document.getElementById("pinInput");
-    const btn = document.getElementById("pinBtn");
-    const err = document.getElementById("lockErr");
-    if (sessionStorage.getItem("amyam_admin_ok") === "1") {
-      lock.classList.add("hide");
-      document.body.classList.remove("locked");
-      return;
-    }
-    function tryUnlock() {
-      if (input.value === ADMIN_PIN) {
-        sessionStorage.setItem("amyam_admin_ok", "1");
-        lock.classList.add("hide");
-        document.body.classList.remove("locked");
-      } else {
-        err.textContent = "PIN salah, coba lagi.";
-        input.value = "";
-        input.focus();
-      }
-    }
-    btn.addEventListener("click", tryUnlock);
-    input.addEventListener("keydown", (e) => { if (e.key === "Enter") tryUnlock(); });
-    setTimeout(() => input.focus(), 100);
-  })();
-
   const $ = (id) => document.getElementById(id);
   let allOrders = [];
   let filter = "all";
@@ -1552,21 +1482,25 @@ window.AmyamStore = (function () {
       '<div class="tr-title2">\ud83c\udfaf Buy/Sell dari Harga Market</div>' +
       '<div class="tr-sub">Isi harga market saat ini, lalu pilih Buy atau Sell</div>' +
       '<div class="tr-field"><label>Harga Market Saat Ini</label><input class="tr-input" type="text" inputmode="decimal" id="trMktPrice" placeholder="contoh: 4050.68" /></div>' +
+      '<div class="tr-field"><label>Offset</label><select class="tr-select" id="trMktOffset"><option value="0.125" selected>0.125</option><option value="0.150">0.150</option><option value="0.175">0.175</option></select></div>' +
       '<div class="tr-hl"><button class="tr-calc-btn" id="trBuyBtn">\ud83d\udfe2 Buy</button><button class="tr-calc-btn" id="trSellBtn">\ud83d\udd34 Sell</button></div>' +
       '<div class="tr-result" id="trMktResult"></div>';
   }
   function trMarketCalc(type) {
     const price = trDec($("trMktPrice").value);
+    const offset = trDec($("trMktOffset").value) || 0.125;
     const box = $("trMktResult");
     if (!price || price <= 0) { box.innerHTML = '<div class="tr-warn">\u26a0\ufe0f Isi harga market dulu.</div>'; return; }
     const sqrtP = Math.sqrt(price);
-    const result = type === "buy" ? Math.pow(sqrtP - 0.125, 2) : Math.pow(sqrtP + 0.125, 2);
+    const result = type === "buy" ? Math.pow(sqrtP - offset, 2) : Math.pow(sqrtP + offset, 2);
     const rowfn = (a, b) => '<div class="row"><span>' + a + '</span><b>' + b + '</b></div>';
     const label = type === "buy" ? "\ud83d\udfe2 BUY" : "\ud83d\udd34 SELL";
-    const formula = type === "buy" ? "(\u221ah \u2212 0.125)\u00b2" : "(\u221ah + 0.125)\u00b2";
+    const offsetTxt = offset.toLocaleString("id-ID", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    const formula = type === "buy" ? ("(\u221ah \u2212 " + offsetTxt + ")\u00b2") : ("(\u221ah + " + offsetTxt + ")\u00b2");
     let html = '<div class="tr-lot"><div class="lbl">' + label + '</div><div class="val">' + result.toLocaleString("id-ID", { maximumFractionDigits: 5 }) + '</div></div>';
     html += '<div class="tr-break">';
     html += rowfn("Harga market", price.toLocaleString("id-ID", { maximumFractionDigits: 5 }));
+    html += rowfn("Offset", offsetTxt);
     html += rowfn("Rumus", formula);
     html += '</div>';
     box.innerHTML = html;

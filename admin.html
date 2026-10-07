@@ -685,7 +685,7 @@ window.AmyamStore = (function () {
     $("omsetPanel").innerHTML = `
       <div class="om-title">\ud83d\udcb0 Kalkulasi Omset</div>
 
-      <div class="om-info">ℹ️ Potongan wajib tetap: <b>Rp 255.000</b><br>Potongan bobot — ayam <b>7 kg</b>, jerohan <b>5 kg</b>.</div>
+      <div class="om-info">ℹ️ Potongan wajib tetap: <b>Rp 155.000</b><br>Potongan bobot — ayam <b>7 kg</b>, jerohan <b>5 kg</b>.</div>
 
       <div class="om-ai-row"><span class="om-ai-tag" id="aiTag"></span><button class="om-ai-btn" type="button" id="aiKeyBtn">🔑 Scan AI</button></div>
 
@@ -794,7 +794,7 @@ window.AmyamStore = (function () {
     const uangEfektif = uangMasuk + totalBayaran;
     const POT_AYAM = 7;        // kg, potongan wajib bobot ayam
     const POT_JEROHAN = 5;     // kg, potongan wajib bobot jerohan
-    const POT_WAJIB = 255000;  // Rp, potongan wajib
+    const POT_WAJIB = 155000;  // Rp, potongan wajib
     const netAyam = bAyam > 0 ? Math.max(0, Math.round((bAyam - POT_AYAM) * 10) / 10) : 0;
     const netJerohan = bJerohan > 0 ? Math.max(0, bJerohan - POT_JEROHAN) : 0;
     const subAyam = Math.round(netAyam * hSetor);

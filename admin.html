@@ -1462,6 +1462,12 @@ window.AmyamStore = (function () {
     const accOpts = Object.keys(TR_ACCOUNTS).map((k) => '<option value="' + k + '"' + (k === savedAcc ? " selected" : "") + '>' + TR_ACCOUNTS[k].label + '</option>').join("");
     const pairOpts = Object.keys(TR_PAIRS).map((k) => '<option value="' + k + '"' + (k === savedPair ? " selected" : "") + '>' + TR_PAIRS[k].label + '</option>').join("");
     $("tradingPanel").innerHTML =
+      '<div class="tr-title2">\ud83d\udcb0 XAUUSD \u00d7 1,5</div>' +
+      '<div class="tr-sub">Khusus XAUUSD \u00b7 isi angka, hasilnya dikali 1,5</div>' +
+      '<div class="tr-field"><input class="tr-input" type="text" inputmode="decimal" id="trX15Val" placeholder="contoh: 4050.68" /></div>' +
+      '<button class="tr-calc-btn" id="trX15Btn">Calculate</button>' +
+      '<div class="tr-result" id="trX15Result"></div>' +
+      '<hr class="tr-divider" />' +
       '<div class="tr-title">\ud83d\udcc8 Kalkulator Risiko Trading</div>' +
       '<div class="tr-sub">Hitung lot size dari nominal risiko (IDR)</div>' +
       '<div class="tr-field"><label>Exchange <span>(nilai tukar broker \u00b7 IDR per 1 USD)</span></label><input class="tr-input" type="text" inputmode="numeric" id="trExchange" placeholder="contoh: 16000" value="' + savedEx + '" /></div>' +
@@ -1486,6 +1492,13 @@ window.AmyamStore = (function () {
       '<div class="tr-hl"><button class="tr-calc-btn" id="trBuyBtn">\ud83d\udfe2 Buy</button><button class="tr-calc-btn" id="trSellBtn">\ud83d\udd34 Sell</button></div>' +
       '<div class="tr-result" id="trMktResult"></div>';
   }
+  function trTimes15() {
+    const v = trDec($("trX15Val").value);
+    const box = $("trX15Result");
+    if (!v || v <= 0) { box.innerHTML = '<div class="tr-warn">\u26a0\ufe0f Isi angkanya dulu.</div>'; return; }
+    const res = Math.round(v * 1.5 * 100000) / 100000;
+    box.innerHTML = '<div class="tr-lot"><div class="lbl">' + v.toLocaleString("id-ID", { maximumFractionDigits: 5 }) + ' \u00d7 1,5</div><div class="val">' + res.toLocaleString("id-ID", { maximumFractionDigits: 5 }) + '</div></div>';
+  }
   function trMarketCalc(type) {
     const price = trDec($("trMktPrice").value);
     const offset = trDec($("trMktOffset").value) || 0.125;
@@ -1506,6 +1519,7 @@ window.AmyamStore = (function () {
     box.innerHTML = html;
   }
   $("tradingPanel").addEventListener("click", (e) => {
+    if (e.target.closest("#trX15Btn")) { trTimes15(); return; }
     if (e.target.closest("#trCalcBtn")) { trCalculate(); return; }
     if (e.target.closest("#trPtBtn")) { trPointsToRupiah(); return; }
     if (e.target.closest("#trBuyBtn")) { trMarketCalc("buy"); return; }

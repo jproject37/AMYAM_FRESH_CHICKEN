@@ -250,6 +250,12 @@
   .rw-body { font-size: 13px; color: #555; }
   .rw-pot { font-size: 12px; color: #999; margin-top: 4px; line-height: 1.6; }
   .rw-setoran { margin-top: 8px; font-size: 14px; color: #2c7a54; font-weight: 700; }
+  .rw-total { background: #eaf7f0; border: 1px solid #bfe3cf; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; text-align: center; }
+  .rw-total small { display: block; font-size: 11px; color: #5b8a74; margin-bottom: 2px; }
+  .rw-total b { font-size: 20px; color: #2c7a54; }
+  .struk-btn.dl { background: #2c7a54; }
+  .rw-actions { display: flex; gap: 8px; }
+  .rw-actions .struk-btn { flex: 1; }
   .om-scan { margin-top: 9px; }
   .om-scan-btn { display: inline-flex; align-items: center; gap: 6px; background: #fff3e6; color: #c0620f; border: 1px dashed #e0a877; border-radius: 10px; padding: 9px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .om-scan-btn:active { opacity: .8; }
@@ -689,7 +695,7 @@ window.AmyamStore = (function () {
 
       <div class="om-ai-row"><span class="om-ai-tag" id="aiTag"></span><button class="om-ai-btn" type="button" id="aiKeyBtn">🔑 Scan AI</button></div>
 
-      <div class="om-hist-row"><button class="om-hist-btn" type="button" id="riwayatBtn">📜 Riwayat (7 hari)</button><button class="om-hist-btn buku" type="button" id="bukuHutangBtn">📕 Buku Hutang</button></div>
+      <div class="om-hist-row"><button class="om-hist-btn" type="button" id="riwayatBtn">📜 Riwayat (bulan ini)</button><button class="om-hist-btn buku" type="button" id="bukuHutangBtn">📕 Buku Hutang</button></div>
 
       <div class="om-field">
         <label>Harga Setor <span>(harga acuan tetap \u00b7 per kg)</span></label>
@@ -871,15 +877,17 @@ window.AmyamStore = (function () {
     $("omResult").innerHTML = html;
   }
 
-  // ====== Riwayat setoran (localStorage, auto-hapus > 7 hari) ======
+  // ====== Riwayat setoran (localStorage, disimpan per bulan kalender; reset otomatis tiap ganti bulan) ======
   const RW_KEY = "amyam_riwayat";
-  const RW_MAX_MS = 7 * 24 * 60 * 60 * 1000;
+  function inBulanIni(iso) {
+    const d = new Date(iso), n = new Date();
+    return !isNaN(d) && d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
+  }
   function riwayatLoad() {
     let arr = [];
     try { arr = JSON.parse(localStorage.getItem(RW_KEY) || "[]"); } catch (e) { arr = []; }
     if (!Array.isArray(arr)) arr = [];
-    const now = Date.now();
-    const kept = arr.filter((r) => r && r.waktu && (now - new Date(r.waktu).getTime()) <= RW_MAX_MS);
+    const kept = arr.filter((r) => r && r.waktu && inBulanIni(r.waktu));
     if (kept.length !== arr.length) localStorage.setItem(RW_KEY, JSON.stringify(kept));
     return kept;
   }
@@ -906,6 +914,12 @@ window.AmyamStore = (function () {
     const box = document.getElementById("rwList");
     if (!box) return;
     const arr = riwayatLoad();
+    const totEl = document.getElementById("rwTotal");
+    if (totEl) {
+      const tot = arr.reduce((a, r) => a + (Number(r.omset) || 0), 0);
+      const bln = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+      totEl.innerHTML = '<small>TOTAL OMSET ' + bln.toUpperCase() + ' (' + arr.length + ' setoran)</small><b>' + rupiah(tot) + '</b>';
+    }
     if (!arr.length) { box.innerHTML = '<div class="rw-empty">Belum ada riwayat tersimpan.</div>'; return; }
     box.innerHTML = arr.map((r) => {
       const pot = (r.potItems && r.potItems.length)
@@ -920,14 +934,42 @@ window.AmyamStore = (function () {
       '</div>';
     }).join('');
   }
+  function riwayatDownload() {
+    const arr = riwayatLoad().slice().reverse();
+    if (!arr.length) { alert("Belum ada riwayat untuk diunduh."); return; }
+    const num = (v) => String(Number(v) || 0).replace(".", ",");
+    const q = (v) => '"' + String(v).replace(/"/g, '""') + '"';
+    const rows = [["Tanggal", "Jam", "Ayam (kg)", "Jerohan (kg)", "Potongan Belanja (Rp)", "Rincian Potongan", "Uang Masuk (Rp)", "Jumlah Setoran (Rp)"]];
+    let total = 0;
+    arr.forEach((r) => {
+      const d = new Date(r.waktu);
+      total += Number(r.omset) || 0;
+      rows.push([
+        d.toLocaleDateString("id-ID"), d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
+        num(r.bAyam), num(r.bJerohan), Math.round(Number(r.potLain) || 0),
+        (r.potItems || []).map((it) => it.nama + " (" + it.nilai + ")").join(" | "),
+        Math.round(Number(r.uangMasuk) || 0), Math.round(Number(r.omset) || 0)
+      ]);
+    });
+    rows.push(["TOTAL", "", "", "", "", "", "", Math.round(total)]);
+    const csv = "\uFEFF" + rows.map((r) => r.map(q).join(";")).join("\r\n");
+    const n = new Date();
+    const name = "riwayat-omset-" + n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + ".csv";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
   function openRiwayat() {
     const ov = document.createElement("div");
     ov.className = "struk-ov"; ov.id = "rwOv";
     ov.innerHTML =
       '<div class="rw-card">' +
-        '<div class="rw-title">📜 Riwayat Setoran <span>(otomatis terhapus setelah 7 hari)</span></div>' +
+        '<div class="rw-title">📜 Riwayat Setoran <span>(bulan ini · reset otomatis tiap pergantian bulan)</span></div>' +
+        '<div class="rw-total" id="rwTotal"></div>' +
         '<div class="rw-list" id="rwList"></div>' +
-        '<button class="struk-btn close" id="rwCloseBtn">✕ Tutup</button>' +
+        '<div class="rw-actions"><button class="struk-btn dl" id="rwDlBtn">⬇️ Unduh (CSV)</button><button class="struk-btn close" id="rwCloseBtn">✕ Tutup</button></div>' +
       '</div>';
     document.body.appendChild(ov);
     renderRiwayatList();
@@ -935,6 +977,7 @@ window.AmyamStore = (function () {
       if (e.target === ov) { ov.remove(); return; }
       const del = e.target.closest("[data-del]");
       if (del) { if (confirm("Hapus riwayat ini?")) riwayatDelete(del.dataset.del); return; }
+      if (e.target.closest("#rwDlBtn")) { riwayatDownload(); return; }
       if (e.target.closest("#rwCloseBtn")) ov.remove();
     });
   }
@@ -1462,12 +1505,6 @@ window.AmyamStore = (function () {
     const accOpts = Object.keys(TR_ACCOUNTS).map((k) => '<option value="' + k + '"' + (k === savedAcc ? " selected" : "") + '>' + TR_ACCOUNTS[k].label + '</option>').join("");
     const pairOpts = Object.keys(TR_PAIRS).map((k) => '<option value="' + k + '"' + (k === savedPair ? " selected" : "") + '>' + TR_PAIRS[k].label + '</option>').join("");
     $("tradingPanel").innerHTML =
-      '<div class="tr-title2">\ud83d\udcb0 XAUUSD \u00d7 1,5</div>' +
-      '<div class="tr-sub">Khusus XAUUSD \u00b7 isi angka, hasilnya dikali 1,5</div>' +
-      '<div class="tr-field"><input class="tr-input" type="text" inputmode="decimal" id="trX15Val" placeholder="contoh: 4050.68" /></div>' +
-      '<button class="tr-calc-btn" id="trX15Btn">Calculate</button>' +
-      '<div class="tr-result" id="trX15Result"></div>' +
-      '<hr class="tr-divider" />' +
       '<div class="tr-title">\ud83d\udcc8 Kalkulator Risiko Trading</div>' +
       '<div class="tr-sub">Hitung lot size dari nominal risiko (IDR)</div>' +
       '<div class="tr-field"><label>Exchange <span>(nilai tukar broker \u00b7 IDR per 1 USD)</span></label><input class="tr-input" type="text" inputmode="numeric" id="trExchange" placeholder="contoh: 16000" value="' + savedEx + '" /></div>' +
@@ -1492,13 +1529,6 @@ window.AmyamStore = (function () {
       '<div class="tr-hl"><button class="tr-calc-btn" id="trBuyBtn">\ud83d\udfe2 Buy</button><button class="tr-calc-btn" id="trSellBtn">\ud83d\udd34 Sell</button></div>' +
       '<div class="tr-result" id="trMktResult"></div>';
   }
-  function trTimes15() {
-    const v = trDec($("trX15Val").value);
-    const box = $("trX15Result");
-    if (!v || v <= 0) { box.innerHTML = '<div class="tr-warn">\u26a0\ufe0f Isi angkanya dulu.</div>'; return; }
-    const res = Math.round(v * 1.5 * 100000) / 100000;
-    box.innerHTML = '<div class="tr-lot"><div class="lbl">' + v.toLocaleString("id-ID", { maximumFractionDigits: 5 }) + ' \u00d7 1,5</div><div class="val">' + res.toLocaleString("id-ID", { maximumFractionDigits: 5 }) + '</div></div>';
-  }
   function trMarketCalc(type) {
     const price = trDec($("trMktPrice").value);
     const offset = trDec($("trMktOffset").value) || 0.125;
@@ -1519,7 +1549,6 @@ window.AmyamStore = (function () {
     box.innerHTML = html;
   }
   $("tradingPanel").addEventListener("click", (e) => {
-    if (e.target.closest("#trX15Btn")) { trTimes15(); return; }
     if (e.target.closest("#trCalcBtn")) { trCalculate(); return; }
     if (e.target.closest("#trPtBtn")) { trPointsToRupiah(); return; }
     if (e.target.closest("#trBuyBtn")) { trMarketCalc("buy"); return; }
